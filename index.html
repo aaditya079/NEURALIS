@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Neuralis // Multi-Agent Developer Console</title>
+  <!-- Modern Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@300;400;500;700&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <!-- Main Stylesheet -->
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body class="theme-obsidian">
+  <!-- Dashboard Grid -->
+  <div class="dashboard-container">
+    
+    <!-- HEADER BAR -->
+    <header class="glass-panel main-header">
+      <div class="brand">
+        <div class="brand-logo">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+            <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="var(--accent-glow)" stroke-width="2" stroke-linejoin="round"/>
+            <path d="M2 17L12 22L22 17" stroke="var(--accent-color)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M2 12L12 17L22 12" stroke="var(--accent-color)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <div class="brand-text">
+          <h1>NEURALIS</h1>
+          <span class="brand-tagline">MULTI-AGENT COORDINATOR // V1.0.4</span>
+        </div>
+      </div>
+
+      <!-- Live Simulation Selectors & Speed -->
+      <div class="simulation-controls">
+        <div class="control-group">
+          <label for="scenario-select">ACTIVE TARGET GOAL</label>
+          <select id="scenario-select" class="glass-select">
+            <option value="jwt-auth">1. Setup JWT Authentication & Route Guards</option>
+            <option value="sql-opt">2. Optimize High-Latency Database Queries</option>
+            <option value="kanban">3. Build Fluid CSS Drag-and-Drop Kanban Board</option>
+          </select>
+        </div>
+        
+        <!-- Playback Engine -->
+        <div class="playback-bar">
+          <button id="btn-rewind" class="btn-icon" title="Reset Simulation">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 17l-5-5 5-5M18 17l-5-5 5-5"/></svg>
+          </button>
+          <button id="btn-prev" class="btn-icon" title="Step Backward">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 20L9 12l10-8v16zM5 19V5"/></svg>
+          </button>
+          <button id="btn-play-pause" class="btn-primary-action" title="Play/Pause">
+            <span class="play-icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+            </span>
+            <span class="pause-icon hidden">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+            </span>
+          </button>
+          <button id="btn-next" class="btn-icon" title="Step Forward">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 4l10 8-10 8V4zM19 5v14"/></svg>
+          </button>
+          
+          <div class="slider-container">
+            <span class="slider-label">SPEED: <span id="speed-val">1.0x</span></span>
+            <input type="range" id="speed-slider" min="0.25" max="5" step="0.25" value="1" class="glass-slider">
+          </div>
+        </div>
+      </div>
+
+      <!-- Central Metrics Tracker -->
+      <div class="metrics-grid">
+        <div class="metric-card">
+          <span class="metric-label">COST ACCRUED</span>
+          <span class="metric-value text-accent" id="metric-cost">$0.000</span>
+        </div>
+        <div class="metric-card">
+          <span class="metric-label">TOKENS ELAPSED</span>
+          <span class="metric-value" id="metric-tokens">0</span>
+        </div>
+        <div class="metric-card">
+          <span class="metric-label">RUN TIME</span>
+          <span class="metric-value" id="metric-time">00:00.0</span>
+        </div>
+        <div class="metric-card">
+          <span class="metric-label">SYSTEM STATUS</span>
+          <span class="status-badge" id="metric-status">
+            <span class="status-dot pulsing"></span>
+            <span class="status-text">INITIALIZING</span>
+          </span>
+        </div>
+      </div>
+    </header>
+
+    <!-- LEFT SIDEBAR: AGENTS & FILESYSTEM -->
+    <aside class="left-panel">
+      <!-- Active Agents List -->
+      <section class="glass-panel panel-agents flex-col">
+        <div class="panel-header">
+          <div class="panel-title-group">
+            <span class="icon-pulse green"></span>
+            <h2>COORDINATED AGENTS</h2>
+          </div>
+          <span class="badge" id="agent-count">0</span>
+        </div>
+        <div class="panel-content scrollable" id="agents-list">
+          <!-- Dynamically Rendered Agent Cards -->
+          <div class="empty-state">No agents spawned.</div>
+        </div>
+      </section>
+
+      <!-- Virtual Filesystem Navigation -->
+      <section class="glass-panel panel-fs flex-col">
+        <div class="panel-header">
+          <div class="panel-title-group">
+            <svg class="title-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+            <h2>VIRTUAL WORKSPACE</h2>
+          </div>
+          <span class="vfs-status">READ-WRITE</span>
+        </div>
+        <div class="panel-content scrollable" id="vfs-tree">
+          <!-- Rendered in-memory filesystem tree -->
+          <div class="empty-state">Mounting VFS...</div>
+        </div>
+      </section>
+    </aside>
+
+    <!-- CENTER AREA: TASK TREE & MOCK TERMINAL -->
+    <main class="center-panel">
+      
+      <!-- Dynamic SVG Task Tree Canvas -->
+      <section class="glass-panel panel-task-tree flex-col">
+        <div class="panel-header">
+          <div class="panel-title-group">
+            <svg class="title-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="5" r="3"/><circle cx="5" cy="19" r="3"/><circle cx="19" cy="19" r="3"/><path d="M5 16v-3a4 4 0 0 1 4-4h6a4 4 0 0 1 4 4v3"/></svg>
+            <h2>DYNAMIC TASK DECOMPOSITION</h2>
+          </div>
+          <div class="canvas-controls">
+            <button id="btn-zoom-in" class="btn-small-icon" title="Zoom In">+</button>
+            <button id="btn-zoom-out" class="btn-small-icon" title="Zoom Out">-</button>
+            <button id="btn-zoom-fit" class="btn-small-icon" title="Reset View">FIT</button>
+          </div>
+        </div>
+        <div class="tree-canvas-wrapper">
+          <!-- SVG Rendering Space -->
+          <svg id="task-tree-svg" class="tree-svg">
+            <defs>
+              <!-- Glowing marker filters for bezier arrows -->
+              <marker id="arrow" viewBox="0 0 10 10" refX="22" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--arrow-color)"/>
+              </marker>
+              <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+                <feGaussianBlur stdDeviation="3" result="blur" />
+                <feComposite in="SourceGraphic" in2="blur" operator="over" />
+              </filter>
+            </defs>
+            <g id="svg-zoom-group">
+              <g id="svg-connections"></g>
+              <g id="svg-nodes"></g>
+            </g>
+          </svg>
+          <div id="tree-overlay-alert" class="hidden">Goal complete! All agents shut down.</div>
+        </div>
+      </section>
+
+      <!-- Monospace Interactive Terminal -->
+      <section class="glass-panel panel-terminal flex-col">
+        <div class="panel-header border-bottom">
+          <div class="panel-title-group">
+            <svg class="title-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg>
+            <h2>VIRTUAL SHELL // MOCK-FS TERMINAL</h2>
+          </div>
+          <div class="terminal-themes">
+            <button class="theme-tab active" data-theme="obsidian">OBSIDIAN</button>
+            <button class="theme-tab" data-theme="cyberpunk">CYBERPUNK</button>
+            <button class="theme-tab" data-theme="matrix">MATRIX</button>
+            <button class="theme-tab" data-theme="emerald">EMERALD</button>
+          </div>
+        </div>
+        <div class="terminal-body scrollable" id="terminal-screen">
+          <div class="terminal-log-stream" id="terminal-logs">
+            <div class="system-line">NEURALIS Shell Kernel v1.0.4 Loaded.</div>
+            <div class="system-line">Type 'help' to view simulated filesystem and agent controls.</div>
+            <div class="system-line">Ready.</div>
+          </div>
+          <div class="terminal-input-row">
+            <span class="terminal-prompt" id="prompt-dir">neuralis:~$</span>
+            <input type="text" id="terminal-input" autocomplete="off" autofocus placeholder="Type terminal command...">
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- RIGHT PANEL: INSPECTOR, DIFFS, MEMORY -->
+    <aside class="right-panel">
+      
+      <!-- Thought Stream & Memory Tabs -->
+      <section class="glass-panel panel-inspector flex-col">
+        <div class="tab-header">
+          <button class="tab-btn active" data-tab="tab-thoughts">THOUGHT STREAM</button>
+          <button class="tab-btn" data-tab="tab-memory">AGENT MEMORY</button>
+          <button class="tab-btn" data-tab="tab-versions">PROMPT IT.</button>
+        </div>
+        
+        <div class="panel-content scrollable tab-body" id="inspector-tabs">
+          
+          <!-- Thoughts View -->
+          <div class="tab-pane active" id="tab-thoughts">
+            <div class="agent-focused-thought-card">
+              <div class="card-header">
+                <span class="active-focus-agent" id="focused-agent-name">No Agent Focused</span>
+                <span class="focus-status" id="focused-agent-status">Idle</span>
+              </div>
+              <div class="thought-stream-markdown" id="thought-markdown-container">
+                <p class="markdown-stream-placeholder">Click any task node or running agent to inspect live token streams.</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Memory Graph View -->
+          <div class="tab-pane" id="tab-memory">
+            <div class="memory-inspector-box">
+              <div class="memory-search-row">
+                <span class="memory-query-label">SEMANTIC VECTOR SCAN</span>
+                <div class="memory-query-text" id="memory-search-query">None</div>
+              </div>
+              <div class="memory-visual-nodes" id="memory-vector-results">
+                <!-- Rendered Vector Matches -->
+                <div class="empty-state">No semantic index queried yet.</div>
+              </div>
+              <div class="memory-db-table">
+                <h3>LONG-TERM KEY-VALUE MEMORY</h3>
+                <div class="kv-log scrollable" id="memory-kv-log">
+                  <div class="kv-row empty">Empty database.</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Prompt Comparison View -->
+          <div class="tab-pane" id="tab-versions">
+            <div class="prompt-comparer">
+              <div class="prompt-version-card">
+                <div class="prompt-header-row">
+                  <span class="prompt-badge">SYSTEM INSTRUCTION v1.0 (INITIAL)</span>
+                </div>
+                <div class="prompt-code" id="prompt-v1">
+                  You are a software engineer agent. Write the requested code structure...
+                </div>
+              </div>
+              <div class="prompt-version-card margin-top">
+                <div class="prompt-header-row justify-between">
+                  <span class="prompt-badge orange">SYSTEM INSTRUCTION v1.1 (SELF-CORRECTED)</span>
+                  <span class="correction-reason" id="prompt-correction-reason">CRITICAL ERROR RECOVERY</span>
+                </div>
+                <div class="prompt-code" id="prompt-v2">
+                  No self-correction applied yet.
+                </div>
+              </div>
+            </div>
+          </div>
+          
+        </div>
+      </section>
+
+      <!-- Code Diff Panel -->
+      <section class="glass-panel panel-diff flex-col">
+        <div class="panel-header border-bottom">
+          <div class="panel-title-group">
+            <svg class="title-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+            <h2>CODE DIFF VIEW // <span id="diff-file-name">no_file.js</span></h2>
+          </div>
+          <div class="diff-view-mode">
+            <span class="diff-mode-badge" id="diff-operation-badge">UNMODIFIED</span>
+          </div>
+        </div>
+        <div class="panel-content scrollable diff-body" id="diff-container">
+          <div class="empty-state">No file edits queued.</div>
+        </div>
+      </section>
+    </aside>
+
+    <!-- HORIZONTAL EVENTS TIMELINE -->
+    <footer class="glass-panel main-timeline flex-row">
+      <div class="timeline-title-bar">
+        <h3>REAL-TIME</h3>
+        <h2>TIMELINE</h2>
+      </div>
+      <div class="timeline-scroller-wrapper">
+        <div class="timeline-event-stream" id="timeline-events">
+          <!-- Dynamic Horizontal Event Blocks -->
+          <div class="timeline-loading-indicator">Waiting for orchestration boot...</div>
+        </div>
+      </div>
+      <div class="timeline-scrubber-panel">
+        <span class="scrub-time" id="scrub-label">EVENT 0 / 0</span>
+        <div class="scrub-slider-container">
+          <input type="range" id="replay-scrub" min="0" max="0" value="0" class="glass-slider scrubber">
+        </div>
+      </div>
+    </footer>
+
+  </div>
+
+  <!-- Scripts -->
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>
