@@ -90,7 +90,97 @@ class StateStore {
         'README.md': {
           type: 'file',
           name: 'README.md',
-          content: '# NEURALIS DEVELOPER CONSOLE\n\nActive goal simulation system initialized.\nSelect a target goal to begin autonomous coding visualizer.'
+          content: '# NEURALIS DEVELOPER CONSOLE\n\nActive goal simulation system initialized.\nSelect a target goal or run a custom AI goal in the header.'
+        },
+        'package.json': {
+          type: 'file',
+          name: 'package.json',
+          content: '{\n  "name": "agentflow-app",\n  "version": "1.0.0",\n  "dependencies": {\n    "express": "^4.19.2",\n    "jsonwebtoken": "^9.0.2",\n    "bcrypt": "^5.1.1",\n    "dotenv": "^16.4.5"\n  }\n}'
+        },
+        '.gitignore': {
+          type: 'file',
+          name: '.gitignore',
+          content: 'node_modules/\n.env\n*.log\n.DS_Store'
+        },
+        '.env.example': {
+          type: 'file',
+          name: '.env.example',
+          content: 'PORT=3000\nJWT_SECRET=your-256-bit-extremely-secure-key-here\nDATABASE_URL=postgresql://db_user:db_pass@localhost:5432/main'
+        },
+        'tests': {
+          type: 'directory',
+          name: 'tests',
+          children: {
+            'auth.test.js': {
+              type: 'file',
+              name: 'auth.test.js',
+              content: '// Automated verification specs\nconst request = require("supertest");\ndescribe("Auth Endpoints", () => {\n  it("should enforce JWT guards", () => {});\n});'
+            }
+          }
+        },
+        'public': {
+          type: 'directory',
+          name: 'public',
+          children: {
+            'favicon.ico': {
+              type: 'file',
+              name: 'favicon.ico',
+              content: '[Binary Resource Vector]'
+            }
+          }
+        },
+        'controllers': {
+          type: 'directory',
+          name: 'controllers',
+          children: {
+            'authController.js': {
+              type: 'file',
+              name: 'authController.js',
+              content: '// Express routing logic\nexports.login = async (req, res) => {\n  // Controller skeleton\n};'
+            }
+          }
+        },
+        'services': {
+          type: 'directory',
+          name: 'services',
+          children: {
+            'tokenService.js': {
+              type: 'file',
+              name: 'tokenService.js',
+              content: '// Hashing cryptographic signing\nexports.generateToken = (payload) => {\n  // Token service template\n};'
+            }
+          }
+        },
+        'src': {
+          type: 'directory',
+          name: 'src',
+          children: {
+            'index.js': {
+              type: 'file',
+              name: 'index.js',
+              content: 'const express = require("express");\nconst app = express();\napp.use(express.json());\napp.listen(3000, () => console.log("Server boot."));'
+            },
+            'db.js': {
+              type: 'file',
+              name: 'db.js',
+              content: '// PostgreSQL database connector\nconst { Pool } = require("pg");\nmodule.exports = new Pool();'
+            },
+            'config': {
+              type: 'directory',
+              name: 'config',
+              children: {}
+            },
+            'routes': {
+              type: 'directory',
+              name: 'routes',
+              children: {}
+            },
+            'middleware': {
+              type: 'directory',
+              name: 'middleware',
+              children: {}
+            }
+          }
         }
       }
     };
@@ -105,7 +195,11 @@ class StateStore {
     this.state.thoughts = {};
     this.state.memoryQuery = 'None';
     this.state.memoryResults = [];
-    this.state.memoryKV = {};
+    this.state.memoryKV = {
+      'system_status': 'ONLINE',
+      'orchestration_v': '1.0.4',
+      'base_workspace': '/d/new project'
+    };
     this.state.activeDiff = null;
     this.state.prompts = {
       v1: "You are a software engineer agent. Write the requested code structure...",

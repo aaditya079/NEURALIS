@@ -1,6 +1,6 @@
 /**
  * NEURALIS // Orchestrator UI Bootstrapper
- * Wireframes state events, tabs, sidebars, SVG tree nodes, and play controls.
+ * Wireframes state events, tabs, sidebars, SVG tree nodes, settings, and live AI API calls.
  */
 
 import { stateStore } from './state.js';
@@ -24,6 +24,20 @@ const speedVal = document.getElementById('speed-val');
 const replayScrub = document.getElementById('replay-scrub');
 const scrubLabel = document.getElementById('scrub-label');
 const scenarioSelect = document.getElementById('scenario-select');
+
+// Live AI custom inputs
+const customGoalContainer = document.getElementById('custom-goal-container');
+const customGoalInput = document.getElementById('custom-goal-input');
+const btnRunCustom = document.getElementById('btn-run-custom');
+
+// Settings modal DOM
+const settingsModal = document.getElementById('settings-modal');
+const btnOpenSettings = document.getElementById('btn-open-settings');
+const btnCloseSettings = document.getElementById('btn-close-settings');
+const btnSaveSettings = document.getElementById('btn-save-settings');
+const apiProviderSelect = document.getElementById('api-provider');
+const apiKeyInput = document.getElementById('api-key-input');
+const settingsSaveStatus = document.getElementById('settings-save-status');
 
 // Metrics DOM
 const metricCost = document.getElementById('metric-cost');
@@ -67,6 +81,52 @@ function initTabSystem() {
   });
 }
 
+// Settings modal toggle & save actions
+function initSettingsSystem() {
+  if (btnOpenSettings && settingsModal) {
+    btnOpenSettings.addEventListener('click', () => {
+      settingsModal.classList.remove('hidden');
+      
+      // Prefill saved keys
+      const savedProvider = localStorage.getItem('agentflow_api_provider') || 'gemini';
+      const savedKey = localStorage.getItem('agentflow_api_key') || '';
+      if (apiProviderSelect) apiProviderSelect.value = savedProvider;
+      if (apiKeyInput) apiKeyInput.value = savedKey;
+      if (settingsSaveStatus) settingsSaveStatus.textContent = '';
+    });
+  }
+
+  if (btnCloseSettings && settingsModal) {
+    btnCloseSettings.addEventListener('click', () => {
+      settingsModal.classList.add('hidden');
+    });
+  }
+
+  // Close modal when clicking dark background overlay
+  settingsModal?.addEventListener('click', (e) => {
+    if (e.target === settingsModal) {
+      settingsModal.classList.add('hidden');
+    }
+  });
+
+  if (btnSaveSettings) {
+    btnSaveSettings.addEventListener('click', () => {
+      const provider = apiProviderSelect ? apiProviderSelect.value : 'gemini';
+      const key = apiKeyInput ? apiKeyInput.value.trim() : '';
+
+      localStorage.setItem('agentflow_api_provider', provider);
+      localStorage.setItem('agentflow_api_key', key);
+
+      if (settingsSaveStatus) {
+        settingsSaveStatus.textContent = 'API keys updated successfully!';
+        setTimeout(() => {
+          settingsModal?.classList.add('hidden');
+        }, 1000);
+      }
+    });
+  }
+}
+
 // Format simulated elapsed time clock
 function formatTime(seconds) {
   const mins = Math.floor(seconds / 60);
@@ -104,7 +164,6 @@ function renderAgents(agentsMap, activeAgentId) {
       </div>
     `;
 
-    // Click agent to focus inspection tabs on them
     card.addEventListener('click', () => {
       stateStore.state.activeAgentId = agent.id;
       stateStore.notify();
@@ -127,7 +186,6 @@ function renderTimeline(timelineArray, currentIndex) {
   
   timelineArray.forEach(ev => {
     const block = document.createElement('div');
-    // Highlight if this block represents the active replayed step
     const isActive = currentIndex >= ev.index;
     block.className = `timeline-block ${isActive ? 'active' : ''}`;
     
@@ -137,7 +195,6 @@ function renderTimeline(timelineArray, currentIndex) {
       <span class="timeline-desc">${ev.desc}</span>
     `;
 
-    // Click timeline block to jump back/forward to that specific step! (Interactive Replay)
     block.addEventListener('click', () => {
       stateStore.seekTo(ev.index);
     });
@@ -145,7 +202,6 @@ function renderTimeline(timelineArray, currentIndex) {
     timelineEventsContainer.appendChild(block);
   });
 
-  // Auto scroll timeline container to the end
   const scroller = timelineEventsContainer.parentElement;
   if (scroller) {
     scroller.scrollLeft = scroller.scrollWidth;
@@ -156,7 +212,6 @@ function renderTimeline(timelineArray, currentIndex) {
 function parseMarkdown(text) {
   if (!text) return '<p class="markdown-stream-placeholder">Awaiting token stream...</p>';
   
-  // Custom rapid regex compiler for simple formatting
   let html = text;
   
   // Headers
@@ -316,10 +371,9 @@ function syncUiComponents(state) {
   // 5. Sidebar Agents inventory & VFS Tree
   renderAgents(state.agents, state.activeAgentId);
   renderVfsTree(state.vfs, vfsTree, (filePath, content) => {
-    // Custom File explorer sidebar click handles: Shows code in the diff viewer!
     stateStore.state.activeDiff = {
       filename: filePath.split('/').pop(),
-      before: content, // Unchanged comparison view
+      before: content, 
       after: content,
       operation: 'VIEWING'
     };
@@ -334,6 +388,16 @@ function syncUiComponents(state) {
 
   // 8. Re-paint Timeline logs
   renderTimeline(state.timelineEvents, stateStore.playbackIndex);
+
+  // Fix 5: Ensure overlay alert ONLY displays when simulation successfully completes at the very last index, preventing bleeding on boot/seeking
+  const overlay = document.getElementById('tree-overlay-alert');
+  if (overlay) {
+    if (stateStore.playbackIndex === stateStore.events.length - 1 && state.metrics.statusClass === 'success') {
+      overlay.classList.remove('hidden');
+    } else {
+      overlay.classList.add('hidden');
+    }
+  }
 }
 
 // Wire up core button controllers
@@ -375,18 +439,35 @@ function initPlaybackControls() {
   }
 
   if (replayScrub) {
-    // Seeking using the scrubber timeline
     replayScrub.addEventListener('input', () => {
       stateStore.seekTo(parseInt(replayScrub.value));
     });
   }
 
-  // Scenario loading trigger
   if (scenarioSelect) {
     scenarioSelect.addEventListener('change', () => {
-      loadActiveScenario();
+      const mode = scenarioSelect.value;
+      if (mode === 'live-ai') {
+        // Toggle live API input container
+        customGoalContainer?.classList.remove('hidden');
+      } else {
+        customGoalContainer?.classList.add('hidden');
+        loadActiveScenario();
+      }
     });
   }
+
+  if (btnRunCustom) {
+    btnRunCustom.addEventListener('click', () => {
+      runLiveAiGoal();
+    });
+  }
+
+  customGoalInput?.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      runLiveAiGoal();
+    }
+  });
 }
 
 // Load a specific scenario by target key
@@ -401,19 +482,210 @@ function loadActiveScenario() {
   }, 100);
 }
 
+// --------------------------------------------------------------------------
+// 💎 10x Feature: Live Gemini / OpenAI Custom Goal API Caller & Fallbacks
+// --------------------------------------------------------------------------
+async function runLiveAiGoal() {
+  const goalText = customGoalInput ? customGoalInput.value.trim() : '';
+  if (!goalText) {
+    alert('Please enter a custom goal description!');
+    return;
+  }
+
+  const provider = localStorage.getItem('agentflow_api_provider') || 'gemini';
+  const apiKey = localStorage.getItem('agentflow_api_key') || '';
+
+  // Clear previous runs
+  stateStore.pause();
+  stateStore.resetStateToStart();
+  stateStore.events = [];
+  stateStore.playbackIndex = -1;
+
+  // Set Loading metrics
+  stateStore.state.metrics.statusText = "ORCHESTRATING...";
+  stateStore.state.metrics.statusClass = "executing";
+  stateStore.state.agents['architect'] = { id: 'architect', name: 'Lead Architect', role: 'Live Coordinator', status: 'thinking', tokens: 0, cost: 0 };
+  stateStore.state.activeAgentId = 'architect';
+  stateStore.state.taskNodes['root'] = { id: 'root', label: goalText, sublabel: 'Goal Root', status: 'thinking', x: 250, y: 40 };
+  stateStore.state.thoughts['architect'] = `# Connecting to Live AI API (${provider.toUpperCase()})...\n\nDecomposing your custom goal: **"${goalText}"**\nCalculating nodes placement, bezier coordinates, and active dependencies tree...`;
+  stateStore.notify();
+
+  // If no API Key is provided, automatically trigger the Mock Live AI fallback
+  if (!apiKey) {
+    terminalShell.appendLogLine('system', 'No developer API key found. Launching custom offline simulation...');
+    setTimeout(() => {
+      runMockLiveAiGoal(goalText);
+    }, 1500);
+    return;
+  }
+
+  terminalShell.appendLogLine('system', `Orchestrating live API request via ${provider.toUpperCase()}...`);
+
+  try {
+    let resultJson;
+    
+    if (provider === 'gemini') {
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
+      const prompt = `Decompose the programming goal: "${goalText}". Decompose it into 4-6 sequential engineering task nodes for a task tree layout. You must output ONLY a valid JSON object matching this schema, with no markdown code fence blocks or wrapper texts:\n{\n  "tasks": [\n    { "id": "task-1", "label": "Task Name", "sublabel": "Agent Name", "x": 100, "y": 120, "parentId": "root" }\n  ],\n  "thoughts": [\n    { "agentId": "architect", "text": "Detailed markdown thought analysis of the goal" }\n  ]\n}`;
+      
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: prompt }] }],
+          generationConfig: { responseMimeType: "application/json" }
+        })
+      });
+      
+      if (!response.ok) throw new Error(`Gemini API Error: ${response.statusText}`);
+      const data = await response.json();
+      const text = data.candidates[0].content.parts[0].text;
+      resultJson = JSON.parse(text);
+    } else {
+      // OpenAI API Fetch
+      const response = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${apiKey}`
+        },
+        body: JSON.stringify({
+          model: 'gpt-4o-mini',
+          messages: [
+            { "role": "system", "content": "You are a senior coordinator agent. Decompose the goal into 4-6 task nodes. Return ONLY a valid JSON object matching: { \"tasks\": [ { \"id\", \"label\", \"sublabel\", \"x\", \"y\", \"parentId\" } ], \"thoughts\": [ { \"agentId\", \"text\" } ] } with response_format json_object." },
+            { "role": "user", "content": goalText }
+          ],
+          response_format: { "type": "json_object" }
+        })
+      });
+      
+      if (!response.ok) throw new Error(`OpenAI API Error: ${response.statusText}`);
+      const data = await response.json();
+      resultJson = JSON.parse(data.choices[0].message.content);
+    }
+
+    playLiveAiResult(resultJson, goalText);
+  } catch (err) {
+    console.error(err);
+    terminalShell.appendLogLine('error', `Live LLM fetch failed: ${err.message}. Falling back to custom simulation...`);
+    stateStore.state.thoughts['architect'] = `# Live API Error\n\nFailed to fetch from ${provider.toUpperCase()}.\n\nError details: \`${err.message}\`\n\nAuto-loading offline simulation fallback...`;
+    stateStore.notify();
+    setTimeout(() => {
+      runMockLiveAiGoal(goalText);
+    }, 2000);
+  }
+}
+
+// Compile LLM JSON response into simulation events and trigger play ticks
+function playLiveAiResult(json, goalText) {
+  if (!json || !json.tasks) {
+    runMockLiveAiGoal(goalText);
+    return;
+  }
+
+  terminalShell.appendLogLine('success', 'Goal successfully decomposed by AI! Building task tree...');
+
+  const liveEvents = [];
+  liveEvents.push({ type: 'TIMELINE_LOG', timestamp: '00:00.0', agentName: 'SYSTEM', description: 'Booting Live LLM workspace.' });
+  liveEvents.push({ type: 'TERMINAL_OUTPUT', text: 'Live AI Goal active. Orchestrating subagents...', lineType: 'system' });
+  liveEvents.push({ type: 'SPAWN_AGENT', agentId: 'architect', name: 'Lead Architect', role: 'Live Coordinator' });
+  liveEvents.push({ type: 'SPAWN_NODE', nodeId: 'root', label: goalText, sublabel: 'Goal Root', status: 'thinking', x: 250, y: 40 });
+
+  // Stream initial thoughts
+  const initialThought = json.thoughts && json.thoughts[0] ? json.thoughts[0].text : `# Orchestrated Decompositions\n\nAnalyzing custom goal: "${goalText}"\nVisualizing subtasks.`;
+  liveEvents.push({ type: 'STREAM_THOUGHT', agentId: 'architect', text: initialThought });
+
+  // Spawn dynamic task nodes returned by LLM
+  json.tasks.forEach((task, idx) => {
+    // Standardize coordinates vertically in the viewport to avoid dead space
+    const colSpacing = 500 / (json.tasks.length + 1);
+    const nodeX = (idx + 1) * colSpacing;
+    const nodeY = idx % 2 === 0 ? 120 : 170; // Alternate heights for organic curve look
+
+    liveEvents.push({
+      type: 'SPAWN_NODE',
+      nodeId: task.id || `task-${idx}`,
+      label: task.label || `Step ${idx + 1}`,
+      sublabel: task.sublabel || 'DevAgent',
+      status: 'planning',
+      x: nodeX,
+      y: nodeY,
+      parentId: 'root'
+    });
+  });
+
+  // Run mock terminal executions and file changes
+  liveEvents.push({ type: 'TIMELINE_LOG', timestamp: '00:03.2', agentName: 'Architect', description: 'Decomposed nodes established.' });
+  liveEvents.push({ type: 'SPAWN_AGENT', agentId: 'developer', name: 'DevAgent', role: 'Live Synthesizer' });
+  liveEvents.push({ type: 'UPDATE_AGENT_STATUS', agentId: 'developer', status: 'thinking', cost: 0.003, tokens: 210, runtime: 4.5 });
+  
+  // Stream Dev thoughts
+  liveEvents.push({ type: 'STREAM_THOUGHT', agentId: 'developer', text: `# Live Synthesis Execution\n\nActive subtask: Initializing code structures for **"${goalText}"**.\nCreating workspace directories and drafting configuration scripts.` });
+  
+  // Update node statuses
+  if (json.tasks.length > 0) {
+    liveEvents.push({ type: 'UPDATE_NODE_STATUS', nodeId: json.tasks[0].id, status: 'executing' });
+  }
+
+  liveEvents.push({ type: 'TERMINAL_COMMAND', command: 'mkdir -p src/utils src/components' });
+  liveEvents.push({ type: 'TERMINAL_OUTPUT', text: 'Created folders: src/utils/, src/components/', lineType: 'success' });
+  
+  const demoCode = `// Autogenerated coding skeleton for:
+// Goal: ${goalText}
+// Compiled live via LLM API
+
+function initOrchestrator() {
+  console.log("Goal initialized: ${goalText}");
+  return { success: true, timestamp: Date.now() };
+}
+
+module.exports = { initOrchestrator };`;
+
+  liveEvents.push({ type: 'VFS_WRITE', path: '/src/utils/orchestrator.js', content: demoCode, operation: 'NEW' });
+  
+  if (json.tasks.length > 0) {
+    liveEvents.push({ type: 'UPDATE_NODE_STATUS', nodeId: json.tasks[0].id, status: 'success' });
+  }
+
+  // Final completion
+  liveEvents.push({ type: 'TIMELINE_LOG', timestamp: '00:08.5', agentName: 'SYSTEM', description: 'Live orchestration completed.' });
+  liveEvents.push({ type: 'SIMULATION_COMPLETE' });
+
+  stateStore.loadEvents(liveEvents);
+  setTimeout(() => {
+    stateStore.play();
+  }, 100);
+}
+
+// Offline simulation fallback: Generates custom nodes and outputs dynamically
+function runMockLiveAiGoal(goalText) {
+  const mockJson = {
+    tasks: [
+      { id: 'task-1', label: `1. Analyze Requirement`, sublabel: 'Lead Architect' },
+      { id: 'task-2', label: `2. Draft ${goalText.split(' ').slice(0,2).join(' ')} Structs`, sublabel: 'Lead Architect' },
+      { id: 'task-3', label: `3. Compile Coding Modules`, sublabel: 'DevAgent' },
+      { id: 'task-4', label: `4. Run Automated E2E Tests`, sublabel: 'QA-Agent' }
+    ],
+    thoughts: [
+      {
+        agentId: 'architect',
+        text: `# Goal Decompositions\n\nGoal context: **"${goalText}"**\nDecomposing the requirement into structured, manageable developer targets:\n\n1. **Requirement Research**: Map specs, imports, and security boundaries.\n2. **Architecture Layout**: Design the components and routing schemas.\n3. **Core Development**: Write code files and configuration JSONs.\n4. **Automated Verification**: Build unit test suites and verify outcomes.`
+      }
+    ]
+  };
+
+  playLiveAiResult(mockJson, goalText);
+}
+
 // Bootstrap Boot Launcher
 window.addEventListener('DOMContentLoaded', () => {
-  // 1. Initialize modular terminal and SVG canvas components
   terminalShell = initTerminalShell();
   taskTreeRenderer = initTaskTree();
 
-  // 2. Initialize secondary UI subsystems
   initTabSystem();
   initPlaybackControls();
+  initSettingsSystem();
 
-  // 3. Register central listener hook
   stateStore.subscribe(syncUiComponents);
-
-  // 4. Default Scenario boot
   loadActiveScenario();
 });

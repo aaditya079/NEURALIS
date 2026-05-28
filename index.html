@@ -34,11 +34,22 @@
       <!-- Live Simulation Selectors & Speed -->
       <div class="simulation-controls">
         <div class="control-group">
-          <label for="scenario-select">ACTIVE TARGET GOAL</label>
+          <div class="select-label-row">
+            <label for="scenario-select">ACTIVE TARGET GOAL</label>
+            <!-- API Settings Trigger -->
+            <button id="btn-open-settings" class="btn-settings-trigger" title="AI API Configuration">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="3"/>
+                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+              </svg>
+              <span>API KEY</span>
+            </button>
+          </div>
           <select id="scenario-select" class="glass-select">
             <option value="jwt-auth">1. Setup JWT Authentication & Route Guards</option>
             <option value="sql-opt">2. Optimize High-Latency Database Queries</option>
             <option value="kanban">3. Build Fluid CSS Drag-and-Drop Kanban Board</option>
+            <option value="live-ai">✨ 4. Run Custom AI Goal (Live LLM API)...</option>
           </select>
         </div>
         
@@ -105,7 +116,6 @@
           <span class="badge" id="agent-count">0</span>
         </div>
         <div class="panel-content scrollable" id="agents-list">
-          <!-- Dynamically Rendered Agent Cards -->
           <div class="empty-state">No agents spawned.</div>
         </div>
       </section>
@@ -120,7 +130,6 @@
           <span class="vfs-status">READ-WRITE</span>
         </div>
         <div class="panel-content scrollable" id="vfs-tree">
-          <!-- Rendered in-memory filesystem tree -->
           <div class="empty-state">Mounting VFS...</div>
         </div>
       </section>
@@ -136,6 +145,11 @@
             <svg class="title-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="5" r="3"/><circle cx="5" cy="19" r="3"/><circle cx="19" cy="19" r="3"/><path d="M5 16v-3a4 4 0 0 1 4-4h6a4 4 0 0 1 4 4v3"/></svg>
             <h2>DYNAMIC TASK DECOMPOSITION</h2>
           </div>
+          <!-- Custom Goal input row (Displays when 4. Custom AI goal is selected) -->
+          <div id="custom-goal-container" class="custom-goal-holder hidden">
+            <input type="text" id="custom-goal-input" placeholder="Type a custom goal (e.g. Build Stripe Webhook integration)...">
+            <button id="btn-run-custom" class="btn-run-action">RUN GOAL</button>
+          </div>
           <div class="canvas-controls">
             <button id="btn-zoom-in" class="btn-small-icon" title="Zoom In">+</button>
             <button id="btn-zoom-out" class="btn-small-icon" title="Zoom Out">-</button>
@@ -146,7 +160,6 @@
           <!-- SVG Rendering Space -->
           <svg id="task-tree-svg" class="tree-svg">
             <defs>
-              <!-- Glowing marker filters for bezier arrows -->
               <marker id="arrow" viewBox="0 0 10 10" refX="22" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
                 <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--arrow-color)"/>
               </marker>
@@ -186,7 +199,7 @@
           </div>
           <div class="terminal-input-row">
             <span class="terminal-prompt" id="prompt-dir">neuralis:~$</span>
-            <input type="text" id="terminal-input" autocomplete="off" autofocus placeholder="Type terminal command...">
+            <input type="text" id="terminal-input" autocomplete="off" placeholder="Type terminal command...">
           </div>
         </div>
       </section>
@@ -218,19 +231,18 @@
             </div>
           </div>
 
-          <!-- Memory Graph View -->
+          <!-- Memory Context Panel -->
           <div class="tab-pane" id="tab-memory">
             <div class="memory-inspector-box">
               <div class="memory-search-row">
-                <span class="memory-query-label">SEMANTIC VECTOR SCAN</span>
+                <span class="memory-query-label">ACTIVE SEMANTIC CONTEXT BUFFER</span>
                 <div class="memory-query-text" id="memory-search-query">None</div>
               </div>
               <div class="memory-visual-nodes" id="memory-vector-results">
-                <!-- Rendered Vector Matches -->
                 <div class="empty-state">No semantic index queried yet.</div>
               </div>
               <div class="memory-db-table">
-                <h3>LONG-TERM KEY-VALUE MEMORY</h3>
+                <h3>VIRTUAL AGENT MEMORY STORE</h3>
                 <div class="kv-log scrollable" id="memory-kv-log">
                   <div class="kv-row empty">Empty database.</div>
                 </div>
@@ -289,7 +301,6 @@
       </div>
       <div class="timeline-scroller-wrapper">
         <div class="timeline-event-stream" id="timeline-events">
-          <!-- Dynamic Horizontal Event Blocks -->
           <div class="timeline-loading-indicator">Waiting for orchestration boot...</div>
         </div>
       </div>
@@ -301,6 +312,39 @@
       </div>
     </footer>
 
+  </div>
+
+  <!-- Sleek Translucent settings gear configuration modal -->
+  <div id="settings-modal" class="modal-overlay hidden">
+    <div class="glass-panel modal-content">
+      <div class="modal-header">
+        <h2>✨ AI PROVIDER API CONFIGURATION</h2>
+        <button id="btn-close-settings" class="btn-close">&times;</button>
+      </div>
+      <div class="modal-body flex-col">
+        <p class="modal-desc">
+          Input your API Key below to enable the **10x Live Mode**. Custom goals will call the actual LLM API in real-time, generate dynamic task trees, and stream real markdown thoughts. Keys are stored safely client-side in `localStorage`.
+        </p>
+        
+        <div class="form-group flex-col">
+          <label for="api-provider">API PROVIDER</label>
+          <select id="api-provider" class="glass-select full-width">
+            <option value="gemini">Google Gemini API (Default)</option>
+            <option value="openai">OpenAI API (GPT-4o/3.5)</option>
+          </select>
+        </div>
+
+        <div class="form-group flex-col margin-top">
+          <label for="api-key-input">API DEVELOPER KEY</label>
+          <input type="password" id="api-key-input" class="glass-input" placeholder="Paste your API key here (sk-... or AIzaSy...)">
+        </div>
+        
+        <div class="modal-actions margin-top">
+          <span id="settings-save-status" class="save-status"></span>
+          <button id="btn-save-settings" class="btn-primary-action">SAVE KEYS</button>
+        </div>
+      </div>
+    </div>
   </div>
 
   <!-- Scripts -->
