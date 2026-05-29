@@ -2,7 +2,7 @@
 
 An immersive, premium client-side developer console that visualizes autonomous AI agents communicating, scheduling subtasks, modifying files, and executing shell commands in real-time. Built entirely with a browser-native modular ES6 architecture, complete with an interactive terminal, a virtual filesystem, a real line-by-line diff compiler, and an event-sourced playback scrubber.
 
-➔ **Live Demo: [https://aaditya079.github.io/neuralis/](https://aaditya079.github.io/NEURALIS/)**
+➔ **Live Demo: [https://aaditya079.github.io/NEURALIS/](https://aaditya079.github.io/NEURALIS/)**
 
 ---
 
@@ -76,7 +76,7 @@ To publish this repository live on GitHub Pages:
 2. Navigate to your repository settings on GitHub: **Settings ➔ Pages**.
 3. Under **Build and deployment ➔ Source**, select **Deploy from a branch**.
 4. Set the branch to **`main`** and the folder to **`/ (root)`**, then click **Save**.
-5. Your live URL will be active at `https://<your-username>.github.io/neuralis/` within a few seconds!
+5. Your live URL will be active at `https://<your-username>.github.io/NEURALIS/` within a few seconds!
 
 ---
 
