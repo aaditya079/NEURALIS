@@ -1,8 +1,8 @@
-# AgentFlow // Multi-Agent Developer Console
+# NEURALIS // Multi-Agent Developer Console
 
 An immersive, premium client-side developer console that visualizes autonomous AI agents communicating, scheduling subtasks, modifying files, and executing shell commands in real-time. Built entirely with a browser-native modular ES6 architecture, complete with an interactive terminal, a virtual filesystem, a real line-by-line diff compiler, and an event-sourced playback scrubber.
 
-➔ **Live Demo: [https://aaditya079.github.io/agentflow/](https://aaditya079.github.io/agentflow/)**
+➔ **Live Demo: [https://aaditya079.github.io/neuralis/](https://aaditya079.github.io/neuralis/)**
 
 ---
 
@@ -33,21 +33,26 @@ $$\text{LCS}(i, j) = \begin{cases} \text{LCS}(i-1, j-1) + 1 & \text{if } X[i] ==
 * Standard commands (`ls`, `cd`, `cat`, `mkdir`, `touch`, `rm`, `tree`) read and mutate the real in-memory VFS JSON, which immediately redraws the sidebar file explorer.
 * Implements standard command line shell history (up/down arrow keys) and **Tab autocompletion** that matches command names as well as files and subdirectories in your active path.
 
+### 5. Live AI API Integration (`js/main.js`)
+* Connects directly to **Google Gemini** and **OpenAI** APIs from the browser.
+* User types any custom engineering goal → real LLM decomposes it → task tree spawns from actual AI output.
+* API keys stored securely in `localStorage`. Includes an offline mock fallback when no key is provided.
+
 ---
 
 ## 📁 Repository Directory Structure
 
 ```
-agentflow/
+neuralis/
 ├── index.html            # Main UI layout grid, glass panels, and header widgets
 ├── styles.css            # Obsidian design variables, glass gradients, and animations
 ├── js/
-│   ├── main.js           # Core bootstrapper and reactive DOM synchronizer
+│   ├── main.js           # Core bootstrapper, reactive DOM synchronizer & live AI calls
 │   ├── state.js          # Event-sourced transaction state store & clock ticks
 │   ├── simulation.js     # Scenario event-log streams (Auth, DB Explains, Kanban)
 │   ├── fs.js             # Nested VFS traversal, resolve paths, and ASCII compiler
 │   ├── terminal.js       # Shell input logging, tab-completion, and command router
-│   ├── tree.js           # custom SVG rendering canvas & pan adjustments
+│   ├── tree.js           # Custom SVG rendering canvas & pan adjustments
 │   └── diff.js           # Dynamic Programming line diff calculator
 └── .gitignore            # OS metadata and workspace logs filters
 ```
@@ -71,7 +76,7 @@ To publish this repository live on GitHub Pages:
 2. Navigate to your repository settings on GitHub: **Settings ➔ Pages**.
 3. Under **Build and deployment ➔ Source**, select **Deploy from a branch**.
 4. Set the branch to **`main`** and the folder to **`/ (root)`**, then click **Save**.
-5. Your live URL will be active at `https://<your-username>.github.io/agentflow/` within a few seconds!
+5. Your live URL will be active at `https://<your-username>.github.io/neuralis/` within a few seconds!
 
 ---
 
@@ -80,7 +85,7 @@ To publish this repository live on GitHub Pages:
 > [!NOTE]
 > *This section is optimized for future AI Coding Assistants (Copilots, Claude, Gemini, Cursor) scanning or extending this codebase.*
 
-When modifying or expanding the capabilities of **AgentFlow**, adhere to the following architectural design contracts:
+When modifying or expanding the capabilities of **NEURALIS**, adhere to the following architectural design contracts:
 
 * **State Mutations must be Event-Sourced**: Never modify the active VFS, agent states, or metrics directly outside of `js/state.js`. To add new features or steps, append a new event dictionary to the scenario lists in `js/simulation.js`.
 * **Event Structure Contract**: All events in the queue must conform to the following schema structure:
