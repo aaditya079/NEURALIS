@@ -2,7 +2,7 @@
 
 An immersive, premium client-side developer console that visualizes autonomous AI agents communicating, scheduling subtasks, modifying files, and executing shell commands in real-time. Built entirely with a browser-native modular ES6 architecture, complete with an interactive terminal, a virtual filesystem, a real line-by-line diff compiler, and an event-sourced playback scrubber.
 
-➔ **Live Demo: [https://aaditya079.github.io/neuralis/](https://aaditya079.github.io/neuralis/)**
+➔ **Live Demo: [https://aaditya079.github.io/neuralis/](https://aaditya079.github.io/NEURALIS/)**
 
 ---
 
