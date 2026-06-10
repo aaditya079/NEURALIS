@@ -462,6 +462,102 @@ module.exports = { initKanban };`, operation: 'MODIFIED' },
   { type: 'SIMULATION_COMPLETE' }
 ];
 
+// SCENARIO 4: Dockerize Application & Setup CI/CD Workflow
+const cicdDevopsEvents = [
+  { type: 'TIMELINE_LOG', timestamp: '00:00.0', agentName: 'SYSTEM', description: 'Booting DevOps runner workspace.' },
+  { type: 'TERMINAL_OUTPUT', text: 'Initializing Docker Engine and CI pipeline checks...', lineType: 'system' },
+  { type: 'SPAWN_AGENT', agentId: 'devops', name: 'DevOpsAgent', role: 'Infrastructure & CI/CD Specialist' },
+  { type: 'UPDATE_AGENT_STATUS', agentId: 'devops', status: 'thinking', cost: 0.002, tokens: 150, runtime: 0.8 },
+  
+  { type: 'SPAWN_NODE', nodeId: 'root', label: 'Dockerize & Setup CI/CD', sublabel: 'DevOps Goal', status: 'thinking', x: 250, y: 40 },
+  { type: 'SPAWN_NODE', nodeId: 'task-docker', label: '1. Draft Dockerfile Config', sublabel: 'DevOpsAgent', status: 'executing', x: 90, y: 120, parentId: 'root' },
+  { type: 'SPAWN_NODE', nodeId: 'task-ci', label: '2. GitHub Actions YAML', sublabel: 'DevOpsAgent', status: 'planning', x: 250, y: 120, parentId: 'root' },
+  { type: 'SPAWN_NODE', nodeId: 'task-verify', label: '3. Pipeline Runner QA', sublabel: 'QA-Agent', status: 'planning', x: 410, y: 120, parentId: 'root' },
+  
+  { type: 'STREAM_THOUGHT', agentId: 'devops', text: '# Infrastructure Plan: Dockerization & Deployment Actions\n\nI need to containerize the Node application and establish a secure, automated build/test pipeline on GitHub Actions:\n\n1. **Dockerfile Specification**: Use a multi-stage node build structure to minimize image layers.\n2. **GitHub Workflow Configuration**: Write `.github/workflows/deploy.yml` with dependency caching.\n3. **Validation**: Test the build script locally, resolve dependencies, and verify lint stages.\n\nLet\'s start by writing the initial Dockerfile.' },
+  
+  // Draft Dockerfile
+  { type: 'VFS_WRITE', path: '/Dockerfile', content: `FROM node:20-alpine
+WORKDIR /app
+COPY . .
+RUN npm install
+EXPOSE 3000
+CMD ["node", "server.js"]`, operation: 'NEW' },
+
+  { type: 'TERMINAL_COMMAND', command: 'docker build -t neuralis-app .' },
+  { type: 'TERMINAL_OUTPUT', text: 'Sending build context to Docker daemon  2.34MB\nStep 1/5 : FROM node:20-alpine\n20-alpine: Pulling from library/node\nDigest: sha256:4f00db1a86\nStep 2/5 : WORKDIR /app\nStep 3/5 : COPY . .\nStep 4/5 : RUN npm install\nnpm ERR! code ENOENT\nnpm ERR! syscall open\nnpm ERR! path /app/package.json\nnpm ERR! errno -2\nnpm ERR! enoent ENOENT: no such file or directory, open \'/app/package.json\'\nThe command \'/bin/sh -c npm install\' returned a non-zero code: 254', lineType: 'error' },
+  
+  { type: 'TIMELINE_LOG', timestamp: '00:03.8', agentName: 'DevOpsAgent', description: 'Failed Docker build compilation. Triggering self-correction.' },
+  { type: 'UPDATE_NODE_STATUS', nodeId: 'task-docker', status: 'failure' },
+  
+  { type: 'STREAM_THOUGHT', agentId: 'devops', text: '# Docker Build Failure: Missing package.json\n\nAh, the directory layout inside our simulation workspace does not contain a root `package.json`! Without a package configuration, `npm install` fails inside the container.\n\nI will:\n1. Generate a root `package.json` for the project.\n2. Optimize the Dockerfile to copy package configuration first, run install to preserve caching layers, then copy the rest of the application files.' },
+  
+  { type: 'VFS_WRITE', path: '/package.json', content: `{\n  "name": "neuralis-app",\n  "version": "1.0.0",\n  "dependencies": {\n    "express": "^4.19.2",\n    "cors": "^2.8.5"\n  }\n}`, operation: 'NEW' },
+  
+  { type: 'VFS_WRITE', path: '/Dockerfile', before: `FROM node:20-alpine
+WORKDIR /app
+COPY . .
+RUN npm install
+EXPOSE 3000
+CMD ["node", "server.js"]`, content: `FROM node:20-alpine as builder
+WORKDIR /app
+COPY package*.json ./
+RUN npm ci --only=production
+COPY . .
+
+FROM node:20-alpine
+WORKDIR /app
+COPY --from=builder /app ./
+EXPOSE 3000
+CMD ["node", "server.js"]`, operation: 'MODIFIED' },
+
+  { type: 'TERMINAL_COMMAND', command: 'docker build -t neuralis-app .' },
+  { type: 'TERMINAL_OUTPUT', text: 'Step 1/9 : FROM node:20-alpine as builder\n ---> ca6f3b20\nStep 2/9 : WORKDIR /app\n ---> Using cache\nStep 3/9 : COPY package*.json ./\n ---> 8b1f3c2d\nStep 4/9 : RUN npm ci --only=production\nadded 56 packages in 1.84s\nStep 5/9 : COPY . .\n ---> 3a1f8c2e\nStep 6/9 : FROM node:20-alpine\nStep 7/9 : WORKDIR /app\nStep 8/9 : COPY --from=builder /app ./\nStep 9/9 : EXPOSE 3000\nSuccessfully built image neuralis-app:latest', lineType: 'success' },
+  { type: 'UPDATE_NODE_STATUS', nodeId: 'task-docker', status: 'success' },
+  
+  // --- WRITE WORKFLOW ---
+  { type: 'UPDATE_NODE_STATUS', nodeId: 'task-ci', status: 'executing' },
+  { type: 'TIMELINE_LOG', timestamp: '00:07.5', agentName: 'DevOpsAgent', description: 'Writing GitHub Actions CI configuration.' },
+  { type: 'STREAM_THOUGHT', agentId: 'devops', text: 'Creating GitHub Actions workflow pipeline `.github/workflows/deploy.yml`. This yaml builds the container, runs checks, and enforces dependency caching.' },
+  
+  { type: 'VFS_WRITE', path: '/.github/workflows/deploy.yml', content: `name: Integration Pipeline
+on:
+  push:
+    branches: [ main ]
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+      - name: Install dependencies
+        run: npm ci
+      - name: Run Linter check
+        run: npm run lint
+      - name: Verify Docker Build
+        run: docker build -t neuralis-app .`, operation: 'NEW' },
+  
+  { type: 'UPDATE_NODE_STATUS', nodeId: 'task-ci', status: 'success' },
+  
+  // --- QA VERIFICATION ---
+  { type: 'SPAWN_AGENT', agentId: 'qa', name: 'QA-Agent', role: 'Automation QA Inspector' },
+  { type: 'UPDATE_AGENT_STATUS', agentId: 'qa', status: 'thinking', cost: 0.003, tokens: 280, runtime: 9.8 },
+  { type: 'UPDATE_NODE_STATUS', nodeId: 'task-verify', status: 'executing' },
+  { type: 'TIMELINE_LOG', timestamp: '00:10.2', agentName: 'QA-Agent', description: 'Simulating pipeline runner lint and dependency tests.' },
+  
+  { type: 'TERMINAL_COMMAND', command: 'npm run lint' },
+  { type: 'TERMINAL_OUTPUT', text: 'Linting codebase...\n✓ src/routes/auth.js: Clean\n✓ src/middleware/guard.js: Clean\n✓ server.js: Clean\nLinter completed. 0 warnings.', lineType: 'success' },
+  
+  { type: 'UPDATE_NODE_STATUS', nodeId: 'task-verify', status: 'success' },
+  { type: 'UPDATE_NODE_STATUS', nodeId: 'root', status: 'success' },
+  { type: 'TIMELINE_LOG', timestamp: '00:11.8', agentName: 'SYSTEM', description: 'CI/CD pipeline verified. Sandbox runner completed.' },
+  { type: 'SIMULATION_COMPLETE' }
+];
+
 // Map scenarios
 export function getScenarioEvents(scenarioId) {
   switch (scenarioId) {
@@ -471,6 +567,8 @@ export function getScenarioEvents(scenarioId) {
       return sqlOptEvents;
     case 'kanban':
       return kanbanEvents;
+    case 'cicd-devops':
+      return cicdDevopsEvents;
     default:
       return jwtAuthEvents;
   }
