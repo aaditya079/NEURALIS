@@ -1,42 +1,63 @@
 # NEURALIS // Multi-Agent Developer Console
 
-An immersive, premium client-side developer console that visualizes autonomous AI agents communicating, scheduling subtasks, modifying files, and executing shell commands in real-time. Built entirely with a browser-native modular ES6 architecture, complete with an interactive terminal, a virtual filesystem, a real line-by-line diff compiler, and an event-sourced playback scrubber.
+[![Live Demo](https://img.shields.io/badge/Live-Demo-brightgreen?style=for-the-badge&logo=github)](https://aaditya079.github.io/NEURALIS/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue?style=for-the-badge)](LICENSE)
+[![CI Pipeline](https://img.shields.io/github/actions/workflow/status/aaditya079/NEURALIS/CI%20Pipeline?branch=main&style=for-the-badge&logo=github-actions)](https://github.com/aaditya079/NEURALIS/actions)
 
-➔ **Live Demo: [https://aaditya079.github.io/NEURALIS/](https://aaditya079.github.io/NEURALIS/)**
+Browser-native multi-agent AI console with event-sourced state, real LCS diffing, custom SVG task trees, and live LLM API integration. Zero dependencies, zero build step.
+
+---
+
+## 🎯 The Primary Experience: High-Fidelity Simulation
+
+NEURALIS is designed primarily as a high-fidelity **Multi-Agent Simulation Console**. It showcases how autonomous software engineering agents (Architects, Developers, and Auditors) coordinate to build projects. 
+
+Instead of showing pre-recorded static animations, the dashboard uses a **fully reactive timeline playback engine** that runs event-sourced transactions in real-time. 
+
+### ⚙️ The Extension: Live AI Mode
+As an advanced extension, the console features a **Live AI Mode** (Gemini, OpenAI, Claude). If you host this project with the included Express server (or deploy to Vercel with serverless functions), visitors can input a custom goal and watch a real LLM decompose it into a task tree and stream markdown thoughts in real-time.
 
 ---
 
 ## 🛠️ The Core Engineering Challenges (How It's Built)
 
-This dashboard avoids generic drag-and-drop frameworks, off-the-shelf terminal widgets, or basic mockups. Instead, it solves several core client-side engineering challenges from scratch:
+This console avoids off-the-shelf widgets, heavy frameworks, or simple mockup animations. It implements several core client-side systems from scratch:
 
 ### 1. Event-Sourced State Architecture (`js/state.js`)
-To enable the **Phase 3 Replay Engine**, the application operates on an immutable, event-sourced transaction log. 
-* Every single activity (an agent spawning, a word streaming in thoughts, a file mutation, a console line log) is treated as a discrete, immutable event object.
-* The playback controller operates a time-scrubbing slider. When you seek or scrub, the state store triggers `seekTo(index)`, wipes the current application state, and replays all events from index `-1` up to the target index. 
-* This design ensures that all elements—the file tree, terminal window, SVG canvas, active agents, and line diffs—sync together at any exact millisecond in the simulation timeline.
+To enable the **Replay Control Scrubber**, the application operates on an immutable, event-sourced transaction log.
+* Every single activity (an agent spawning, a word streaming in thoughts, a VFS mutation, a console line log) is treated as a discrete, immutable event.
+* The timeline scrubbing bar triggers `seekTo(index)`, wipes the current application state, and replays all events from index `-1` up to the target index.
+* This ensures that all components—the virtual file tree, terminal logs, SVG task tree, active agents, and line diffs—sync together at any exact millisecond in history.
 
 ### 2. Real Line-by-Line LCS Diffing Engine (`js/diff.js`)
-Instead of displaying pre-baked file comparisons, the right inspector panel computes real text differences between file snapshots using a custom client-side **Dynamic Programming Longest Common Subsequence (LCS)** algorithm:
-$$\text{LCS}(i, j) = \begin{cases} \text{LCS}(i-1, j-1) + 1 & \text{if } X[i] == Y[j] \\ \max(\text{LCS}(i-1, j), \text{LCS}(i, j-1)) & \text{otherwise} \end{cases}$$
-* The system splits the pre- and post-mutation contents of the Virtual Filesystem files into array lines.
-* It dynamically builds an LCS weight table and backtracks through the coordinate grid to output unchanged, added (green), or deleted (red) lines, complete with line numbers and absolute formatting.
+Instead of displaying pre-baked text diffs, the inspector panel computes real line differences between VFS snapshots using a custom client-side **Dynamic Programming Longest Common Subsequence (LCS)** algorithm:
 
-### 3. Dynamic Custom SVG Task Tree (`js/tree.js`)
-* Renders hierarchical goal decompositions dynamically using pure SVG nodes (`<g>`, `<circle>`, `<text>`) and smooth, mathematically computed cubic-bezier connection cables:
-  $$M(x_1, y_1) \rightarrow C\left(x_1, y_1 + \frac{dy}{2}, x_2, y_2 - \frac{dy}{2}, x_2, y_2\right)$$
-* Visualizes real-time token traffic / message passing by duplicating connection paths, overlaying a custom `stroke-dasharray` filter, and driving an active CSS offset shift to simulate flowing photons.
-* Offers dynamic mouse-drag canvas panning and zoom scale matrix translations.
+```text
+If X[i] == Y[j]:
+    LCS(i, j) = LCS(i-1, j-1) + 1
+Else:
+    LCS(i, j) = max(LCS(i-1, j), LCS(i, j-1))
+```
 
-### 4. Tab-Completing UNIX Shell Interpreter (`js/terminal.js`)
+* The engine splits the before and after files into arrays of lines, builds the LCS weight table, and backtracks to output unchanged, added (green), or deleted (red) rows.
+
+### 3. Real-Time Client-Side TF-IDF Search Engine (`js/memory.js`)
+To simulate agent vector databases, we built a **functioning Information Retrieval engine** in pure vanilla JavaScript:
+* Indexes the virtual files dynamically as they are created or modified in the workspace.
+* Tokenizes queries and documents, filters English stop words, and calculates **TF-IDF vectors**.
+* Computes the **Cosine Similarity** between query and VFS documents, ranking results with actual decimal scores (e.g. `Score: 0.816` for `/src/routes/auth.js` when searching "cookie expiry").
+* The simulation's `MEMORY_QUERY` events run this search engine *live* on the filesystem state, replacing mock text with real mathematical similarity scans.
+
+### 4. Dynamic Custom SVG Task Tree (`js/tree.js`)
+* Renders hierarchical goal decompositions dynamically using pure SVG nodes and smooth, mathematically computed cubic-bezier connection cables:
+  `M(x1, y1) -> C(x1, y1 + dy/2, x2, y2 - dy/2, x2, y2)`
+* Visualizes real-time token traffic by overlaying a custom `stroke-dasharray` filter and driving active CSS offset transitions to animate flowing photons.
+* Offers dynamic mouse-drag canvas panning and zoom scale translations.
+
+### 5. Tab-Completing UNIX Shell Interpreter (`js/terminal.js`)
 * Built a custom terminal window linked directly to the reactively updating Virtual Filesystem (VFS).
 * Standard commands (`ls`, `cd`, `cat`, `mkdir`, `touch`, `rm`, `tree`) read and mutate the real in-memory VFS JSON, which immediately redraws the sidebar file explorer.
-* Implements standard command line shell history (up/down arrow keys) and **Tab autocompletion** that matches command names as well as files and subdirectories in your active path.
-
-### 5. Live AI API Integration (`js/main.js`)
-* Connects directly to **Google Gemini** and **OpenAI** APIs from the browser.
-* User types any custom engineering goal → real LLM decomposes it → task tree spawns from actual AI output.
-* API keys stored securely in `localStorage`. Includes an offline mock fallback when no key is provided.
+* Implements standard shell command history (up/down arrow keys) and **Tab autocompletion** matching command names and VFS paths.
 
 ---
 
@@ -45,63 +66,76 @@ $$\text{LCS}(i, j) = \begin{cases} \text{LCS}(i-1, j-1) + 1 & \text{if } X[i] ==
 ```
 neuralis/
 ├── index.html            # Main UI layout grid, glass panels, and header widgets
-├── styles.css            # Obsidian design variables, glass gradients, and animations
+├── styles.css            # Obsidian design variables, glass gradients, and responsive layouts
+├── server.js             # Express server for local hosting and LLM API routing
+├── package.json          # Script commands and backend relay dependencies
+├── api/
+│   └── generate.js       # Vercel Serverless Function relaying LLM calls
 ├── js/
 │   ├── main.js           # Core bootstrapper, reactive DOM synchronizer & live AI calls
 │   ├── state.js          # Event-sourced transaction state store & clock ticks
-│   ├── simulation.js     # Scenario event-log streams (Auth, DB Explains, Kanban)
+│   ├── simulation.js     # Prebuilt scenario event-log streams (Auth, DB Explains, Kanban, CI/CD)
 │   ├── fs.js             # Nested VFS traversal, resolve paths, and ASCII compiler
 │   ├── terminal.js       # Shell input logging, tab-completion, and command router
 │   ├── tree.js           # Custom SVG rendering canvas & pan adjustments
-│   └── diff.js           # Dynamic Programming line diff calculator
-└── .gitignore            # OS metadata and workspace logs filters
+│   ├── diff.js           # Dynamic Programming line diff calculator
+│   └── memory.js         # Client-side TF-IDF similarity vector search
+└── tests/
+    └── diff.test.mjs     # Native Node.js unit tests for LCS diff engine
 ```
 
 ---
 
-## 🚀 GitHub Pages & Local Deployment Guide
+## 🚀 Local Deployment & CI Testing
 
-Because the application is built using standard, zero-config HTML5 and vanilla JavaScript ES Modules, it requires **zero compilation steps** or heavy bundlers. It is immediately ready to be hosted statically:
+Because the frontend is built using standard, zero-config HTML5 and vanilla JavaScript ES Modules, it requires **zero compilation steps**.
 
-### 1. Local Dev Server
-Serve the workspace directory using any simple static HTTP server. For example, using Python:
+### 1. Running Locally
+Install dependencies and run the server:
 ```bash
-python -m http.server 8000
+npm install
+npm start
 ```
-Then load `http://localhost:8000` in your web browser.
+Then load `http://localhost:3000` in your web browser.
 
-### 2. GitHub Pages Deployment (Zero-Config)
-To publish this repository live on GitHub Pages:
-1. Push this branch (`main`) to your GitHub repository.
-2. Navigate to your repository settings on GitHub: **Settings ➔ Pages**.
-3. Under **Build and deployment ➔ Source**, select **Deploy from a branch**.
-4. Set the branch to **`main`** and the folder to **`/ (root)`**, then click **Save**.
-5. Your live URL will be active at `https://<your-username>.github.io/NEURALIS/` within a few seconds!
+### 2. Running Unit Tests
+Validate the LCS diff algorithm locally:
+```bash
+npm test
+```
+
+### 3. Continuous Integration
+This project runs tests automatically on every push and pull request to the `main` branch via GitHub Actions (`.github/workflows/test.yml`).
 
 ---
 
-## 🤖 AI Agent Context & Modding Guide (AI-Proof Instructions)
+## 🤖 Modding Guide: Adding Custom Scenarios
 
-> [!NOTE]
-> *This section is optimized for future AI Coding Assistants (Copilots, Claude, Gemini, Cursor) scanning or extending this codebase.*
+The `js/simulation.js` file handles the heavy lifting of pre-loaded workspace animations. If you want to add a custom scenario:
 
-When modifying or expanding the capabilities of **NEURALIS**, adhere to the following architectural design contracts:
-
-* **State Mutations must be Event-Sourced**: Never modify the active VFS, agent states, or metrics directly outside of `js/state.js`. To add new features or steps, append a new event dictionary to the scenario lists in `js/simulation.js`.
-* **Event Structure Contract**: All events in the queue must conform to the following schema structure:
-  ```typescript
-  interface AgentEvent {
-    type: 'SPAWN_AGENT' | 'UPDATE_AGENT_STATUS' | 'STREAM_THOUGHT' | 'SPAWN_NODE' | 'UPDATE_NODE_STATUS' | 'TERMINAL_COMMAND' | 'TERMINAL_OUTPUT' | 'VFS_WRITE' | 'MEMORY_QUERY' | 'MEMORY_WRITE' | 'PROMPT_REVISION' | 'TIMELINE_LOG' | 'SIMULATION_COMPLETE';
-    agentId?: string;
-    nodeId?: string;
-    text?: string;
-    path?: string;
-    content?: string;
-    before?: string;
-    tokens?: number;
-    cost?: number;
-    runtime?: number;
-    // ...event-specific properties
-  }
-  ```
-* **Separation of Concerns**: Keep DOM manipulations and event listeners strictly inside `js/main.js` and `js/terminal.js`. Mathematical calculations for VFS nodes or SVG vectors belong inside `js/fs.js` and `js/tree.js` respectively.
+1. Open `js/simulation.js` and define a new event-log array:
+   ```javascript
+   const myCustomEvents = [
+     { type: 'TIMELINE_LOG', timestamp: '00:00.0', agentName: 'SYSTEM', description: 'Start' },
+     { type: 'SPAWN_AGENT', agentId: 'my-agent', name: 'AgentName', role: 'Developer' }
+     // ...
+   ];
+   ```
+2. Supported event types:
+   - `SPAWN_AGENT`: Spawns a new coordinator/developer agent card.
+   - `UPDATE_AGENT_STATUS`: Changes active agent status (thinking, executing, success, failure).
+   - `STREAM_THOUGHT`: Streams token thoughts in markdown to the active agent card.
+   - `SPAWN_NODE` / `UPDATE_NODE_STATUS`: Creates or modifies task tree nodes.
+   - `VFS_WRITE`: Creates or modifies files in the Virtual Workspace.
+   - `TERMINAL_COMMAND` / `TERMINAL_OUTPUT`: Logs input and outputs in the shell prompt.
+   - `MEMORY_QUERY`: Triggers a TF-IDF cosine similarity search on the VFS.
+   - `SIMULATION_COMPLETE`: Completes simulation playback.
+3. Register your scenario inside the `getScenarioEvents(scenarioId)` switch statement:
+   ```javascript
+   case 'my-scenario':
+     return myCustomEvents;
+   ```
+4. Add the select option to the `#scenario-select` dropdown in `index.html`:
+   ```html
+   <option value="my-scenario">X. My Awesome Custom Scenario</option>
+   ```
