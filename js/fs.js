@@ -149,3 +149,23 @@ export function compileAsciiTree(vfsNode, indent = '') {
 
   return output;
 }
+
+// Helper: Extract all files (leaves) from VFS recursively with path and contents
+export function getAllFiles(vfsNode, currentPath = '') {
+  let files = [];
+  if (!vfsNode || !vfsNode.children) return files;
+  
+  for (const name in vfsNode.children) {
+    const child = vfsNode.children[name];
+    const itemPath = `${currentPath}/${name}`;
+    if (child.type === 'directory') {
+      files = files.concat(getAllFiles(child, itemPath));
+    } else {
+      files.push({
+        path: itemPath,
+        content: child.content || ''
+      });
+    }
+  }
+  return files;
+}
