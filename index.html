@@ -353,9 +353,16 @@
           <input type="password" id="api-key-input" class="glass-input" placeholder="Paste your API key here (sk-... or AIzaSy...)">
         </div>
         
+        <div class="security-disclaimer">
+          🔒 <strong>Security Note:</strong> API keys are stored strictly in your browser's local sandbox (<code>localStorage</code>) and are never sent to any external server other than the direct LLM endpoints or your self-hosted backend relay.
+        </div>
+        
         <div class="modal-actions margin-top">
           <span id="settings-save-status" class="save-status"></span>
-          <button id="btn-save-settings" class="btn-primary-action">SAVE KEYS</button>
+          <div style="display: flex; gap: 8px;">
+            <button id="btn-clear-settings" class="btn-error-action" style="background: rgba(239, 68, 68, 0.15); border-color: rgba(239, 68, 68, 0.3); color: var(--state-failure); padding: 6px 12px; border-radius: 6px; font-size: 0.75rem; cursor: pointer;">CLEAR KEYS</button>
+            <button id="btn-save-settings" class="btn-primary-action">SAVE KEYS</button>
+          </div>
         </div>
       </div>
     </div>

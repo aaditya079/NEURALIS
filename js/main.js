@@ -31,6 +31,7 @@ const settingsModal = document.getElementById('settings-modal');
 const btnOpenSettings = document.getElementById('btn-open-settings');
 const btnCloseSettings = document.getElementById('btn-close-settings');
 const btnSaveSettings = document.getElementById('btn-save-settings');
+const btnClearSettings = document.getElementById('btn-clear-settings');
 const apiProviderSelect = document.getElementById('api-provider');
 const apiKeyInput = document.getElementById('api-key-input');
 const settingsSaveStatus = document.getElementById('settings-save-status');
@@ -122,6 +123,22 @@ function initSettingsSystem() {
         setTimeout(() => {
           settingsModal?.classList.add('hidden');
         }, 1000);
+      }
+    });
+  }
+
+  if (btnClearSettings) {
+    btnClearSettings.addEventListener('click', () => {
+      localStorage.removeItem('agentflow_api_key');
+      localStorage.removeItem('agentflow_api_provider');
+      if (apiKeyInput) apiKeyInput.value = '';
+      if (apiProviderSelect) apiProviderSelect.value = 'gemini';
+
+      if (settingsSaveStatus) {
+        settingsSaveStatus.textContent = 'API keys cleared!';
+        setTimeout(() => {
+          settingsSaveStatus.textContent = '';
+        }, 1500);
       }
     });
   }

@@ -1343,6 +1343,20 @@ body {
   font-size: 0.65rem;
   color: var(--state-success);
 }
+.security-disclaimer {
+  font-size: 0.7rem;
+  color: var(--color-text-muted);
+  background: rgba(255, 255, 255, 0.01);
+  border: 1px dashed var(--border-dim);
+  border-radius: 6px;
+  padding: 8px 10px;
+  margin-top: 12px;
+  line-height: 1.4;
+}
+.security-disclaimer strong {
+  color: var(--accent-color);
+}
+
 
 /* --------------------------------------------------------------------------
    13. Keyframes & Animation Library
