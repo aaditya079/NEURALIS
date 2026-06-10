@@ -1,14 +1,10 @@
-/**
- * NEURALIS // Orchestrator UI Bootstrapper
- * Wireframes state events, tabs, sidebars, SVG tree nodes, settings, and live AI API calls.
- */
-
 import { stateStore } from './state.js';
 import { getScenarioEvents } from './simulation.js';
-import { renderVfsTree } from './fs.js';
+import { renderVfsTree, getAllFiles } from './fs.js';
 import { initTerminalShell } from './terminal.js';
 import { initTaskTree } from './tree.js';
 import { renderDiffView } from './diff.js';
+import { TfIdfEngine } from './memory.js';
 
 // Setup global controllers
 let terminalShell;
@@ -58,6 +54,10 @@ const focusedAgentStatus = document.getElementById('focused-agent-status');
 const memoryQuery = document.getElementById('memory-search-query');
 const memoryResults = document.getElementById('memory-vector-results');
 const memoryKV = document.getElementById('memory-kv-log');
+const memorySearchInput = document.getElementById('memory-search-input');
+const btnMemorySearch = document.getElementById('btn-memory-search');
+
+const tfIdfEngine = new TfIdfEngine();
 
 // Prompt Versions DOM
 const promptV1 = document.getElementById('prompt-v1');
@@ -292,20 +292,47 @@ function syncUiComponents(state) {
     }
   }
 
+  // Index VFS files dynamically for TF-IDF Cosine Similarity Search
+  try {
+    const files = getAllFiles(state.vfs);
+    tfIdfEngine.documents = {};
+    files.forEach(f => tfIdfEngine.addDocument(f.path, f.content));
+  } catch (e) {
+    console.error('Failed to index VFS:', e);
+  }
+
   // Memory Panel
   if (memoryQuery) memoryQuery.textContent = state.memoryQuery || 'None';
   if (memoryResults) {
-    if (state.memoryResults && state.memoryResults.length > 0) {
-      memoryResults.innerHTML = '';
-      state.memoryResults.forEach(res => {
-        const node = document.createElement('div');
-        node.className = 'vector-node';
-        node.innerHTML = `
-          <span class="vector-text">${res.text}</span>
-          <span class="vector-distance">SCORE: ${res.score.toFixed(2)}</span>
-        `;
-        memoryResults.appendChild(node);
-      });
+    if (state.memoryQuery && state.memoryQuery !== 'None') {
+      const results = tfIdfEngine.search(state.memoryQuery);
+      if (results.length > 0) {
+        memoryResults.innerHTML = '';
+        results.forEach(res => {
+          const node = document.createElement('div');
+          node.className = 'vector-node';
+          node.innerHTML = `
+            <span class="vector-text">${res.path}</span>
+            <span class="vector-distance">SCORE: ${res.score.toFixed(3)}</span>
+          `;
+          node.style.cursor = 'pointer';
+          node.addEventListener('click', () => {
+            const doc = tfIdfEngine.documents[res.path];
+            if (doc) {
+              stateStore.state.activeDiff = {
+                filename: res.path.split('/').pop(),
+                before: doc.content,
+                after: doc.content,
+                operation: 'RETRIEVED'
+              };
+              stateStore.notify();
+            }
+          });
+          memoryResults.appendChild(node);
+        });
+      } else {
+        memoryResults.innerHTML = '<div class="empty-state">No matching document vectors found.</div>';
+      }
     } else {
       memoryResults.innerHTML = '<div class="empty-state">No semantic index queried yet.</div>';
     }
@@ -468,6 +495,27 @@ function initPlaybackControls() {
       runLiveAiGoal();
     }
   });
+
+  // TF-IDF manual search trigger
+  if (btnMemorySearch) {
+    btnMemorySearch.addEventListener('click', () => {
+      const qVal = memorySearchInput ? memorySearchInput.value.trim() : '';
+      if (qVal) {
+        stateStore.state.memoryQuery = qVal;
+        stateStore.notify();
+      }
+    });
+  }
+
+  memorySearchInput?.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      const qVal = memorySearchInput.value.trim();
+      if (qVal) {
+        stateStore.state.memoryQuery = qVal;
+        stateStore.notify();
+      }
+    }
+  });
 }
 
 // Load a specific scenario by target key
@@ -483,7 +531,7 @@ function loadActiveScenario() {
 }
 
 // --------------------------------------------------------------------------
-// 💎 10x Feature: Live Gemini / OpenAI Custom Goal API Caller & Fallbacks
+// 💎 10x Feature: Live Gemini / OpenAI / Claude Relay Caller & Failures
 // --------------------------------------------------------------------------
 async function runLiveAiGoal() {
   const goalText = customGoalInput ? customGoalInput.value.trim() : '';
@@ -510,70 +558,140 @@ async function runLiveAiGoal() {
   stateStore.state.thoughts['architect'] = `# Connecting to Live AI API (${provider.toUpperCase()})...\n\nDecomposing your custom goal: **"${goalText}"**\nCalculating nodes placement, bezier coordinates, and active dependencies tree...`;
   stateStore.notify();
 
-  // If no API Key is provided, automatically trigger the Mock Live AI fallback
-  if (!apiKey) {
-    terminalShell.appendLogLine('system', 'No developer API key found. Launching custom offline simulation...');
-    setTimeout(() => {
-      runMockLiveAiGoal(goalText);
-    }, 1500);
-    return;
-  }
-
-  terminalShell.appendLogLine('system', `Orchestrating live API request via ${provider.toUpperCase()}...`);
+  terminalShell.appendLogLine('system', `Attempting live API request via backend relay (/api/generate) using ${provider.toUpperCase()}...`);
 
   try {
-    let resultJson;
-    
-    if (provider === 'gemini') {
-      const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
-      const prompt = `Decompose the programming goal: "${goalText}". Decompose it into 4-6 sequential engineering task nodes for a task tree layout. You must output ONLY a valid JSON object matching this schema, with no markdown code fence blocks or wrapper texts:\n{\n  "tasks": [\n    { "id": "task-1", "label": "Task Name", "sublabel": "Agent Name", "x": 100, "y": 120, "parentId": "root" }\n  ],\n  "thoughts": [\n    { "agentId": "architect", "text": "Detailed markdown thought analysis of the goal" }\n  ]\n}`;
-      
-      const response = await fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: prompt }] }],
-          generationConfig: { responseMimeType: "application/json" }
-        })
-      });
-      
-      if (!response.ok) throw new Error(`Gemini API Error: ${response.statusText}`);
-      const data = await response.json();
-      const text = data.candidates[0].content.parts[0].text;
-      resultJson = JSON.parse(text);
-    } else {
-      // OpenAI API Fetch
-      const response = await fetch('https://api.openai.com/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${apiKey}`
-        },
-        body: JSON.stringify({
-          model: 'gpt-4o-mini',
-          messages: [
-            { "role": "system", "content": "You are a senior coordinator agent. Decompose the goal into 4-6 task nodes. Return ONLY a valid JSON object matching: { \"tasks\": [ { \"id\", \"label\", \"sublabel\", \"x\", \"y\", \"parentId\" } ], \"thoughts\": [ { \"agentId\", \"text\" } ] } with response_format json_object." },
-            { "role": "user", "content": goalText }
-          ],
-          response_format: { "type": "json_object" }
-        })
-      });
-      
-      if (!response.ok) throw new Error(`OpenAI API Error: ${response.statusText}`);
-      const data = await response.json();
-      resultJson = JSON.parse(data.choices[0].message.content);
+    // Attempt request to backend relay
+    const response = await fetch('/api/generate', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        goal: goalText,
+        provider: provider,
+        clientKey: apiKey
+      })
+    });
+
+    if (!response.ok) {
+      const errData = await response.json().catch(() => ({}));
+      const errMsg = errData.error || `Server returned status ${response.status}`;
+      throw new Error(errMsg);
     }
 
+    const resultJson = await response.json();
     playLiveAiResult(resultJson, goalText);
   } catch (err) {
-    console.error(err);
-    terminalShell.appendLogLine('error', `Live LLM fetch failed: ${err.message}. Falling back to custom simulation...`);
-    stateStore.state.thoughts['architect'] = `# Live API Error\n\nFailed to fetch from ${provider.toUpperCase()}.\n\nError details: \`${err.message}\`\n\nAuto-loading offline simulation fallback...`;
-    stateStore.notify();
-    setTimeout(() => {
-      runMockLiveAiGoal(goalText);
-    }, 2000);
+    console.warn('Backend relay failed, checking client-side fallback:', err.message);
+    
+    // If backend is unavailable or fails, try direct browser-native client-side fallback for Gemini/OpenAI if key is supplied
+    if (apiKey && (provider === 'gemini' || provider === 'openai')) {
+      terminalShell.appendLogLine('system', `Relay unavailable. Attempting direct browser-to-LLM client request...`);
+      try {
+        let resultJson;
+        if (provider === 'gemini') {
+          const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
+          const prompt = `Decompose the programming goal: "${goalText}". Decompose it into 4-6 sequential engineering task nodes for a task tree layout. You must output ONLY a valid JSON object matching this schema, with no markdown code fence blocks or wrapper texts:\n{\n  "tasks": [\n    { "id": "task-1", "label": "Task Name", "sublabel": "Agent Name", "parentId": "root" }\n  ],\n  "thoughts": [\n    { "agentId": "architect", "text": "Detailed markdown thought analysis of the goal" }\n  ]\n}`;
+          
+          const clientRes = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              contents: [{ parts: [{ text: prompt }] }],
+              generationConfig: { responseMimeType: "application/json" }
+            })
+          });
+          if (!clientRes.ok) throw new Error(`Gemini client API failed: ${clientRes.statusText}`);
+          const data = await clientRes.json();
+          const text = data.candidates[0].content.parts[0].text;
+          resultJson = JSON.parse(text);
+        } else {
+          const clientRes = await fetch('https://api.openai.com/v1/chat/completions', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${apiKey}`
+            },
+            body: JSON.stringify({
+              model: 'gpt-4o-mini',
+              messages: [
+                { "role": "system", "content": "You are a senior coordinator agent. Decompose the goal into 4-6 task nodes. Return ONLY a valid JSON object matching: { \"tasks\": [ { \"id\", \"label\", \"sublabel\", \"parentId\" } ], \"thoughts\": [ { \"agentId\", \"text\" } ] } with response_format json_object." },
+                { "role": "user", "content": goalText }
+              ],
+              response_format: { "type": "json_object" }
+            })
+          });
+          if (!clientRes.ok) throw new Error(`OpenAI client API failed: ${clientRes.statusText}`);
+          const data = await clientRes.json();
+          resultJson = JSON.parse(data.choices[0].message.content);
+        }
+        playLiveAiResult(resultJson, goalText);
+        return;
+      } catch (clientErr) {
+        console.error('Client-side fallback error:', clientErr);
+        terminalShell.appendLogLine('error', `Direct client fallback request failed: ${clientErr.message}`);
+      }
+    }
+
+    // Trigger visual error boundary UI
+    showLiveAiError(err.message, goalText);
   }
+}
+
+// Renders the API orchestration error card in the thoughts panel
+function showLiveAiError(errorMessage, goalText) {
+  stateStore.state.metrics.statusText = "API ERROR";
+  stateStore.state.metrics.statusClass = "api-error";
+  stateStore.state.taskNodes['root'] = { id: 'root', label: goalText, sublabel: 'Goal Root', status: 'failure', x: 250, y: 40 };
+  
+  terminalShell.appendLogLine('error', `LIVE API ERROR: ${errorMessage}`);
+  terminalShell.appendLogLine('system', `Orchestrator failed. Options rendered inside Thought Stream.`);
+
+  stateStore.state.thoughts['architect'] = `
+# ⚠️ Live API Orchestration Failed
+
+We encountered a connection error while trying to reach the LLM coordinator.
+
+**Diagnostics:**
+\`\`\`text
+${errorMessage}
+\`\`\`
+
+---
+
+### 💡 Possible Resolutions:
+1. **Host Backend Deployment**: Ensure your Express backend or Vercel Serverless Function `/api/generate` is deployed and environment API keys are active.
+2. **Missing Client Key**: Click the **⚙️ API KEY** button in the header and input your developer key.
+3. **CORS Blockers**: Direct client requests to Claude or OpenAI are prevented by browser CORS security. Use a backend relay.
+
+---
+
+<div class="api-error-card">
+  <h3>API ORCHESTRATION ERROR</h3>
+  <p>You can launch a dynamic offline simulation of your goal immediately, configure developer keys, or retry the connection.</p>
+  <div class="api-error-actions">
+    <button id="btn-err-offline" class="btn-error-action primary">Run Offline Simulator</button>
+    <button id="btn-err-settings" class="btn-error-action">Configure Keys</button>
+    <button id="btn-err-retry" class="btn-error-action">Retry Connection</button>
+  </div>
+</div>
+`;
+  stateStore.notify();
+
+  // Attach event handlers to dynamic cards
+  setTimeout(() => {
+    document.getElementById('btn-err-offline')?.addEventListener('click', () => {
+      terminalShell.appendLogLine('system', 'Running offline goal compiler...');
+      runMockLiveAiGoal(goalText);
+    });
+    document.getElementById('btn-err-settings')?.addEventListener('click', () => {
+      settingsModal?.classList.remove('hidden');
+    });
+    document.getElementById('btn-err-retry')?.addEventListener('click', () => {
+      runLiveAiGoal();
+    });
+  }, 100);
 }
 
 // Compile LLM JSON response into simulation events and trigger play ticks
@@ -591,16 +709,14 @@ function playLiveAiResult(json, goalText) {
   liveEvents.push({ type: 'SPAWN_AGENT', agentId: 'architect', name: 'Lead Architect', role: 'Live Coordinator' });
   liveEvents.push({ type: 'SPAWN_NODE', nodeId: 'root', label: goalText, sublabel: 'Goal Root', status: 'thinking', x: 250, y: 40 });
 
-  // Stream initial thoughts
   const initialThought = json.thoughts && json.thoughts[0] ? json.thoughts[0].text : `# Orchestrated Decompositions\n\nAnalyzing custom goal: "${goalText}"\nVisualizing subtasks.`;
   liveEvents.push({ type: 'STREAM_THOUGHT', agentId: 'architect', text: initialThought });
 
   // Spawn dynamic task nodes returned by LLM
   json.tasks.forEach((task, idx) => {
-    // Standardize coordinates vertically in the viewport to avoid dead space
     const colSpacing = 500 / (json.tasks.length + 1);
     const nodeX = (idx + 1) * colSpacing;
-    const nodeY = idx % 2 === 0 ? 120 : 170; // Alternate heights for organic curve look
+    const nodeY = idx % 2 === 0 ? 120 : 170;
 
     liveEvents.push({
       type: 'SPAWN_NODE',
@@ -614,15 +730,11 @@ function playLiveAiResult(json, goalText) {
     });
   });
 
-  // Run mock terminal executions and file changes
   liveEvents.push({ type: 'TIMELINE_LOG', timestamp: '00:03.2', agentName: 'Architect', description: 'Decomposed nodes established.' });
   liveEvents.push({ type: 'SPAWN_AGENT', agentId: 'developer', name: 'DevAgent', role: 'Live Synthesizer' });
   liveEvents.push({ type: 'UPDATE_AGENT_STATUS', agentId: 'developer', status: 'thinking', cost: 0.003, tokens: 210, runtime: 4.5 });
-  
-  // Stream Dev thoughts
   liveEvents.push({ type: 'STREAM_THOUGHT', agentId: 'developer', text: `# Live Synthesis Execution\n\nActive subtask: Initializing code structures for **"${goalText}"**.\nCreating workspace directories and drafting configuration scripts.` });
   
-  // Update node statuses
   if (json.tasks.length > 0) {
     liveEvents.push({ type: 'UPDATE_NODE_STATUS', nodeId: json.tasks[0].id, status: 'executing' });
   }
@@ -630,16 +742,7 @@ function playLiveAiResult(json, goalText) {
   liveEvents.push({ type: 'TERMINAL_COMMAND', command: 'mkdir -p src/utils src/components' });
   liveEvents.push({ type: 'TERMINAL_OUTPUT', text: 'Created folders: src/utils/, src/components/', lineType: 'success' });
   
-  const demoCode = `// Autogenerated coding skeleton for:
-// Goal: ${goalText}
-// Compiled live via LLM API
-
-function initOrchestrator() {
-  console.log("Goal initialized: ${goalText}");
-  return { success: true, timestamp: Date.now() };
-}
-
-module.exports = { initOrchestrator };`;
+  const demoCode = `// Autogenerated coding skeleton for:\n// Goal: ${goalText}\n// Compiled live via LLM API\n\nfunction initOrchestrator() {\n  console.log("Goal initialized: ${goalText}");\n  return { success: true, timestamp: Date.now() };\n}\n\nmodule.exports = { initOrchestrator };`;
 
   liveEvents.push({ type: 'VFS_WRITE', path: '/src/utils/orchestrator.js', content: demoCode, operation: 'NEW' });
   
@@ -647,7 +750,6 @@ module.exports = { initOrchestrator };`;
     liveEvents.push({ type: 'UPDATE_NODE_STATUS', nodeId: json.tasks[0].id, status: 'success' });
   }
 
-  // Final completion
   liveEvents.push({ type: 'TIMELINE_LOG', timestamp: '00:08.5', agentName: 'SYSTEM', description: 'Live orchestration completed.' });
   liveEvents.push({ type: 'SIMULATION_COMPLETE' });
 
@@ -657,24 +759,144 @@ module.exports = { initOrchestrator };`;
   }, 100);
 }
 
-// Offline simulation fallback: Generates custom nodes and outputs dynamically
+// Smart offline scenario planner mapping user query terms to dynamic mock structures
 function runMockLiveAiGoal(goalText) {
-  const mockJson = {
+  const goal = goalText.toLowerCase();
+  
+  let fileToCreate = '/src/utils/orchestrator.js';
+  let demoCode = '';
+  let nodeType = 'DevAgent';
+  let agentThought = '';
+  let command = 'npm run test';
+  let commandOutput = '';
+  
+  if (goal.includes('stripe') || goal.includes('pay') || goal.includes('billing')) {
+    fileToCreate = '/src/routes/payments.js';
+    demoCode = `const express = require('express');\nconst router = express.Router();\nconst stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);\n\nrouter.post('/webhook', express.raw({type: 'application/json'}), async (req, res) => {\n  const sig = req.headers['stripe-signature'];\n  let event;\n  try {\n    event = stripe.webhooks.constructEvent(req.body, sig, process.env.STRIPE_WEBHOOK_SECRET);\n  } catch (err) {\n    return res.status(400).send(\`Webhook Error: \${err.message}\`);\n  }\n  \n  if (event.type === 'checkout.session.completed') {\n    const session = event.data.object;\n    // Fulfill checkout...\n  }\n  res.json({received: true});\n});\n\nmodule.exports = router;`;
+    nodeType = 'StripeAgent';
+    agentThought = `# Stripe Webhook Decompositions\n\nGoal context: **"${goalText}"**\nImplementing secure Stripe webhook endpoint:\n\n1. Verify signatures to prevent replay attacks.\n2. Ingest events and filter for checkout completions.\n3. Run local webhook proxy for validation.`;
+    command = 'stripe trigger checkout.session.completed';
+    commandOutput = '✓ Webhook event checkout.session.completed triggered successfully. HTTP 200 OK.';
+  } else if (goal.includes('docker') || goal.includes('container') || goal.includes('kube') || goal.includes('ci')) {
+    fileToCreate = '/Dockerfile';
+    demoCode = `FROM node:20-alpine\nWORKDIR /app\nCOPY package*.json ./\nRUN npm ci --only=production\nCOPY . .\nEXPOSE 3000\nCMD ["node", "server.js"]`;
+    nodeType = 'DevOpsAgent';
+    agentThought = `# Docker Deployment Decompositions\n\nGoal context: **"${goalText}"**\nBuilding Node docker container:\n\n1. Separate dependency installation from file copying to leverage layer caching.\n2. Use multi-stage build structure for minimal size.`;
+    command = 'docker build -t app-image .';
+    commandOutput = 'Successfully built image app-image:latest (124MB)';
+  } else if (goal.includes('python') || goal.includes('django') || goal.includes('flask') || goal.includes('fastapi')) {
+    fileToCreate = '/app/main.py';
+    demoCode = `from fastapi import FastAPI\napp = FastAPI()\n\n@app.get("/")\ndef read_root():\n    return {"status": "online", "framework": "FastAPI"}`;
+    nodeType = 'PythonAgent';
+    agentThought = `# Python API Decompositions\n\nGoal context: **"${goalText}"**\nSetting up FastAPI framework:\n\n1. Define endpoints with type validation.\n2. Configure uvicorn runner for local testing.`;
+    command = 'uvicorn app.main:app --reload';
+    commandOutput = 'INFO:     Uvicorn server running on http://127.0.0.1:8000 (Press CTRL+C to quit)';
+  } else {
+    fileToCreate = '/src/utils/orchestrator.js';
+    demoCode = `// Autogenerated skeleton module\nfunction initModule() {\n  console.log("Initializing module for: ${goalText}");\n  return { success: true };\n}\nmodule.exports = { initModule };`;
+    nodeType = 'DevAgent';
+    agentThought = `# Goal Decompositions\n\nGoal context: **"${goalText}"**\nDecomposing user requirements into core subtasks:\n\n1. Define specs and architecture.\n2. Code core modules and dependencies.\n3. Conduct E2E validation.`;
+    command = 'npm run test:unit';
+    commandOutput = '✓ Unit tests completed. 100% assertions passed.';
+  }
+
+  const dynamicJson = {
     tasks: [
-      { id: 'task-1', label: `1. Analyze Requirement`, sublabel: 'Lead Architect' },
-      { id: 'task-2', label: `2. Draft ${goalText.split(' ').slice(0,2).join(' ')} Structs`, sublabel: 'Lead Architect' },
-      { id: 'task-3', label: `3. Compile Coding Modules`, sublabel: 'DevAgent' },
-      { id: 'task-4', label: `4. Run Automated E2E Tests`, sublabel: 'QA-Agent' }
+      { id: 'task-1', label: `1. Define Design Specs`, sublabel: 'Lead Architect' },
+      { id: 'task-2', label: `2. Initialize Project Modules`, sublabel: nodeType },
+      { id: 'task-3', label: `3. Run Automation Suite`, sublabel: 'QA-Agent' }
     ],
     thoughts: [
-      {
-        agentId: 'architect',
-        text: `# Goal Decompositions\n\nGoal context: **"${goalText}"**\nDecomposing the requirement into structured, manageable developer targets:\n\n1. **Requirement Research**: Map specs, imports, and security boundaries.\n2. **Architecture Layout**: Design the components and routing schemas.\n3. **Core Development**: Write code files and configuration JSONs.\n4. **Automated Verification**: Build unit test suites and verify outcomes.`
-      }
+      { agentId: 'architect', text: agentThought }
     ]
   };
 
-  playLiveAiResult(mockJson, goalText);
+  terminalShell.appendLogLine('success', 'Goal parsed offline successfully! Generating dynamic simulation events...');
+
+  const liveEvents = [];
+  liveEvents.push({ type: 'TIMELINE_LOG', timestamp: '00:00.0', agentName: 'SYSTEM', description: 'Booting custom offline simulation.' });
+  liveEvents.push({ type: 'SPAWN_AGENT', agentId: 'architect', name: 'Lead Architect', role: 'Live Coordinator' });
+  liveEvents.push({ type: 'SPAWN_NODE', nodeId: 'root', label: goalText, sublabel: 'Goal Root', status: 'thinking', x: 250, y: 40 });
+  liveEvents.push({ type: 'STREAM_THOUGHT', agentId: 'architect', text: dynamicJson.thoughts[0].text });
+
+  dynamicJson.tasks.forEach((task, idx) => {
+    const colSpacing = 500 / (dynamicJson.tasks.length + 1);
+    const nodeX = (idx + 1) * colSpacing;
+    const nodeY = idx % 2 === 0 ? 120 : 170;
+
+    liveEvents.push({
+      type: 'SPAWN_NODE',
+      nodeId: task.id,
+      label: task.label,
+      sublabel: task.sublabel,
+      status: 'planning',
+      x: nodeX,
+      y: nodeY,
+      parentId: 'root'
+    });
+  });
+
+  liveEvents.push({ type: 'TIMELINE_LOG', timestamp: '00:02.5', agentName: 'Architect', description: 'Tasks mapped and scheduled.' });
+  liveEvents.push({ type: 'SPAWN_AGENT', agentId: 'developer', name: nodeType, role: 'Task Implementer' });
+  liveEvents.push({ type: 'UPDATE_AGENT_STATUS', agentId: 'developer', status: 'thinking', cost: 0.002, tokens: 180, runtime: 3.5 });
+  liveEvents.push({ type: 'UPDATE_NODE_STATUS', nodeId: 'task-1', status: 'success' });
+  liveEvents.push({ type: 'UPDATE_NODE_STATUS', nodeId: 'task-2', status: 'executing' });
+  
+  liveEvents.push({
+    type: 'STREAM_THOUGHT',
+    agentId: 'developer',
+    text: `# Writing Module Files\n\nCreating module file: \`${fileToCreate}\` to address requirement.\n\nCode Draft:\n\`\`\`javascript\n${demoCode}\n\`\`\``
+  });
+
+  liveEvents.push({ type: 'VFS_WRITE', path: fileToCreate, content: demoCode, operation: 'NEW' });
+  liveEvents.push({ type: 'UPDATE_NODE_STATUS', nodeId: 'task-2', status: 'success' });
+
+  liveEvents.push({ type: 'SPAWN_AGENT', agentId: 'qa', name: 'QA-Agent', role: 'Verification Analyst' });
+  liveEvents.push({ type: 'UPDATE_NODE_STATUS', nodeId: 'task-3', status: 'executing' });
+  liveEvents.push({ type: 'TERMINAL_COMMAND', command: command });
+  liveEvents.push({ type: 'TERMINAL_OUTPUT', text: commandOutput, lineType: 'success' });
+  
+  liveEvents.push({ type: 'UPDATE_NODE_STATUS', nodeId: 'task-3', status: 'success' });
+  liveEvents.push({ type: 'UPDATE_NODE_STATUS', nodeId: 'root', status: 'success' });
+  liveEvents.push({ type: 'TIMELINE_LOG', timestamp: '00:07.4', agentName: 'SYSTEM', description: 'Offline simulation successfully completed.' });
+  liveEvents.push({ type: 'SIMULATION_COMPLETE' });
+
+  stateStore.loadEvents(liveEvents);
+  setTimeout(() => {
+    stateStore.play();
+  }, 100);
+}
+
+// Setup mobile navigation tab bindings
+function initMobileNavSystem() {
+  const mobileTabBtns = document.querySelectorAll('.mobile-tab-btn');
+  const dashboardContainer = document.querySelector('.dashboard-container');
+  
+  if (mobileTabBtns && dashboardContainer) {
+    // Default show workspace on mobile viewports
+    dashboardContainer.classList.add('mobile-show-workspace');
+    
+    mobileTabBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const panel = btn.dataset.panel;
+        
+        mobileTabBtns.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        
+        dashboardContainer.classList.remove(
+          'mobile-show-workspace',
+          'mobile-show-tree',
+          'mobile-show-terminal',
+          'mobile-show-inspector'
+        );
+        
+        if (panel === 'workspace') dashboardContainer.classList.add('mobile-show-workspace');
+        else if (panel === 'tree') dashboardContainer.classList.add('mobile-show-tree');
+        else if (panel === 'terminal') dashboardContainer.classList.add('mobile-show-terminal');
+        else if (panel === 'inspector') dashboardContainer.classList.add('mobile-show-inspector');
+      });
+    });
+  }
 }
 
 // Bootstrap Boot Launcher
@@ -685,6 +907,7 @@ window.addEventListener('DOMContentLoaded', () => {
   initTabSystem();
   initPlaybackControls();
   initSettingsSystem();
+  initMobileNavSystem();
 
   stateStore.subscribe(syncUiComponents);
   loadActiveScenario();

@@ -1367,6 +1367,87 @@ body {
   to { opacity: 1; transform: translateY(0); }
 }
 
+/* Mobile Navigation Tab Bar (Hidden on desktop by default) */
+.mobile-nav-tabs {
+  display: none;
+}
+
+/* TF-IDF Vector Search Input */
+.memory-search-input-group {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.memory-search-input-group .glass-input {
+  flex: 1;
+}
+
+/* API Error Badge & Message styling */
+.status-badge.api-error .status-dot {
+  background: var(--state-failure);
+  box-shadow: 0 0 10px var(--state-failure-glow);
+}
+.status-badge.api-error {
+  border-color: var(--state-failure);
+  color: var(--state-failure);
+  background: rgba(239, 68, 68, 0.1);
+  box-shadow: 0 0 8px rgba(239, 68, 68, 0.2);
+}
+
+.api-error-card {
+  background: rgba(239, 68, 68, 0.08);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-radius: 8px;
+  padding: 16px;
+  margin-top: 12px;
+  color: var(--color-text-main);
+  animation: slideIn 0.3s ease;
+}
+.api-error-card h3 {
+  color: var(--state-failure);
+  font-size: 0.9rem;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-ui);
+  font-weight: 700;
+}
+.api-error-card p {
+  font-size: 0.78rem;
+  line-height: 1.5;
+  color: var(--color-text-muted);
+  margin-bottom: 12px;
+}
+.api-error-actions {
+  display: flex;
+  gap: 8px;
+}
+.btn-error-action {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--border-dim);
+  color: var(--color-text-main);
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 0.7rem;
+  font-family: var(--font-mono);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.btn-error-action:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: var(--color-text-muted);
+}
+.btn-error-action.primary {
+  background: var(--state-failure);
+  border-color: var(--state-failure);
+  color: #fff;
+  font-weight: bold;
+}
+.btn-error-action.primary:hover {
+  box-shadow: 0 0 10px rgba(239, 68, 68, 0.4);
+}
+
 /* Responsive Scaling adjustments */
 @media (max-width: 1400px) {
   .dashboard-container {
@@ -1376,3 +1457,119 @@ body {
     width: 200px;
   }
 }
+
+/* Mobile & Tablet viewports collapse */
+@media (max-width: 1024px) {
+  .mobile-nav-tabs {
+    display: flex;
+    grid-column: 1 / -1;
+    justify-content: space-around;
+    gap: 6px;
+    background: rgba(10, 16, 30, 0.85);
+    border: 1px solid var(--border-dim);
+    border-radius: 8px;
+    padding: 6px;
+    margin-bottom: 2px;
+  }
+  
+  .mobile-tab-btn {
+    flex: 1;
+    background: transparent;
+    border: none;
+    color: var(--color-text-muted);
+    font-family: var(--font-ui);
+    font-weight: 600;
+    font-size: 0.72rem;
+    padding: 8px 4px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-align: center;
+  }
+  
+  .mobile-tab-btn:hover {
+    color: var(--color-text-main);
+    background: rgba(255, 255, 255, 0.02);
+  }
+  
+  .mobile-tab-btn.active {
+    color: var(--accent-color);
+    background: rgba(0, 212, 255, 0.05);
+    border-bottom: 2px solid var(--accent-color);
+    box-shadow: 0 4px 12px rgba(0, 212, 255, 0.03);
+  }
+  
+  .dashboard-container {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto auto 1fr auto;
+    height: 100vh;
+    padding: 8px;
+    grid-gap: 8px;
+  }
+  
+  /* Timeline Footer should span the single column */
+  .main-timeline {
+    grid-row: 4;
+  }
+  
+  /* Conditional visibility of panels on mobile based on selected tab */
+  .dashboard-container.mobile-show-workspace .left-panel {
+    display: flex !important;
+  }
+  .dashboard-container.mobile-show-workspace .center-panel,
+  .dashboard-container.mobile-show-workspace .right-panel {
+    display: none !important;
+  }
+  
+  .dashboard-container.mobile-show-tree .center-panel {
+    display: flex !important;
+  }
+  .dashboard-container.mobile-show-tree .panel-task-tree {
+    display: flex !important;
+  }
+  .dashboard-container.mobile-show-tree .panel-terminal {
+    display: none !important;
+  }
+  .dashboard-container.mobile-show-tree .left-panel,
+  .dashboard-container.mobile-show-tree .right-panel {
+    display: none !important;
+  }
+  
+  .dashboard-container.mobile-show-terminal .center-panel {
+    display: flex !important;
+  }
+  .dashboard-container.mobile-show-terminal .panel-terminal {
+    display: flex !important;
+  }
+  .dashboard-container.mobile-show-terminal .panel-task-tree {
+    display: none !important;
+  }
+  .dashboard-container.mobile-show-terminal .left-panel,
+  .dashboard-container.mobile-show-terminal .right-panel {
+    display: none !important;
+  }
+  
+  .dashboard-container.mobile-show-inspector .right-panel {
+    display: flex !important;
+  }
+  .dashboard-container.mobile-show-inspector .left-panel,
+  .dashboard-container.mobile-show-inspector .center-panel {
+    display: none !important;
+  }
+  
+  /* Allow left and right panels to expand to full height on mobile when visible */
+  .left-panel, .right-panel {
+    grid-column: 1 !important;
+    height: 100% !important;
+  }
+  .center-panel {
+    grid-column: 1 !important;
+    height: 100% !important;
+  }
+  
+  /* Adjust SVG tree heights on mobile */
+  .panel-task-tree {
+    height: 100% !important;
+  }
+}
+

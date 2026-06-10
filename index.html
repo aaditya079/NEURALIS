@@ -49,7 +49,8 @@
             <option value="jwt-auth">1. Setup JWT Authentication & Route Guards</option>
             <option value="sql-opt">2. Optimize High-Latency Database Queries</option>
             <option value="kanban">3. Build Fluid CSS Drag-and-Drop Kanban Board</option>
-            <option value="live-ai">✨ 4. Run Custom AI Goal (Live LLM API)...</option>
+            <option value="cicd-devops">4. Dockerize App & Setup GitHub Actions CI/CD</option>
+            <option value="live-ai">✨ 5. Run Custom AI Goal (Live LLM API)...</option>
           </select>
         </div>
         
@@ -103,6 +104,14 @@
         </div>
       </div>
     </header>
+
+    <!-- Mobile Navigation Tab Bar (Visible under 1024px) -->
+    <div class="mobile-nav-tabs">
+      <button class="mobile-tab-btn active" data-panel="workspace">WORKSPACE</button>
+      <button class="mobile-tab-btn" data-panel="tree">TASK TREE</button>
+      <button class="mobile-tab-btn" data-panel="terminal">TERMINAL</button>
+      <button class="mobile-tab-btn" data-panel="inspector">INSPECTOR</button>
+    </div>
 
     <!-- LEFT SIDEBAR: AGENTS & FILESYSTEM -->
     <aside class="left-panel">
@@ -234,8 +243,12 @@
           <!-- Memory Context Panel -->
           <div class="tab-pane" id="tab-memory">
             <div class="memory-inspector-box">
+              <div class="memory-search-input-group">
+                <input type="text" id="memory-search-input" placeholder="Query vector memory (e.g. secret)..." class="glass-input">
+                <button id="btn-memory-search" class="btn-run-action">RETRIEVE</button>
+              </div>
               <div class="memory-search-row">
-                <span class="memory-query-label">ACTIVE SEMANTIC CONTEXT BUFFER</span>
+                <span class="memory-query-label">ACTIVE RETRIEVAL QUERY</span>
                 <div class="memory-query-text" id="memory-search-query">None</div>
               </div>
               <div class="memory-visual-nodes" id="memory-vector-results">
@@ -331,6 +344,7 @@
           <select id="api-provider" class="glass-select full-width">
             <option value="gemini">Google Gemini API (Default)</option>
             <option value="openai">OpenAI API (GPT-4o/3.5)</option>
+            <option value="claude">Anthropic Claude API (3.5 Sonnet)</option>
           </select>
         </div>
 
