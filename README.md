@@ -169,16 +169,20 @@ npm test
 ### 3. Continuous Integration
 This project runs tests automatically on every push and pull request to the `main` branch via GitHub Actions (`.github/workflows/test.yml`).
 
----
+## 🔌 Multi-LLM & Ollama Configuration Guide
 
-## 🔌 Ollama Configuration Guide
+NEURALIS allows you to mix and match different LLM providers (Google Gemini, OpenAI, Anthropic Claude, and local Ollama) for different agent roles within a single goal.
 
-To run local multi-agent code generation:
+To configure your multi-agent routing:
 1. Open the settings modal in the header via the **⚙️ API KEY** button.
-2. Select **Ollama (Local Multi-LLM)** as the API provider.
-3. Ensure Ollama is running on your machine (default: `http://localhost:11434`), and click **FETCH**. The console will dynamically query your local Ollama tags and populate all dropdowns.
-4. Assign a different model to each role (e.g. `llama3` for Coordinator, `qwen2.5-coder` for Coder, and `mistral` for QA) and click **SAVE**.
-5. Select **✨ 6. Run Custom AI Goal** in the active targets dropdown, enter your goal description, and click **RUN GOAL**.
+2. Under **API KEYS & CREDENTIALS**, input the API keys for the cloud providers you plan to use (Gemini, OpenAI, and/or Claude).
+3. If using local models, ensure Ollama is running on your machine (default: `http://localhost:11434`), enter your host URL, and click **FETCH**. The console will dynamically query your local Ollama tags.
+4. Under **ROLE ROUTING CONFIGURATION**, assign a provider and model for each role individually:
+   * **Coordinator Model (Architect)**: Select the provider and model best suited for task planning and dependency decomposition (e.g. `claude-3-5-sonnet`, `gemini-2.5-pro`, `llama3.2`).
+   * **Developer Model (Coder)**: Select the provider and model best suited for generating clean JavaScript modules (e.g. `qwen2.5-coder`, `gpt-4o-mini`).
+   * **QA / Security Model (Auditor)**: Select the provider and model best suited for bug checking, review, and auditing (e.g. `mistral`, `gemini-2.5-flash`, `gpt-4o-mini`).
+5. Click **SAVE KEYS** to persist configurations client-side.
+6. Select **✨ 6. Run Custom AI Goal** in the active targets dropdown, enter your goal description, and click **RUN GOAL**. The subagents will invoke the specified models sequentially in the execution pipeline.
 
 ---
 
