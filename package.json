@@ -6,7 +6,7 @@
   "scripts": {
     "start": "node server.js",
     "dev": "node server.js",
-    "test": "node tests/diff.test.mjs",
+    "test": "node tests/diff.test.mjs && node tests/math.test.mjs",
     "test:math": "node tests/math.test.mjs"
   },
   "dependencies": {
