@@ -93,7 +93,7 @@ class TaskTreeRenderer {
     for (const node of nodesList) {
       if (node.parentId && nodesMap[node.parentId]) {
         const parent = nodesMap[node.parentId];
-        this.drawBezierCable(parent.x, parent.y, node.x, node.y, node.status);
+        this.drawBezierCable(parent.x, parent.y + 19, node.x, node.y - 19, node.status);
       }
     }
 
@@ -160,85 +160,87 @@ class TaskTreeRenderer {
     }
   }
 
-  // Draw recursive circle nodes with custom highlights
+  // Draw recursive rectangular cards for task nodes (DAG layout style)
   drawNode(node, isFocused) {
     const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
     g.className.baseVal = 'node-group';
     g.style.cursor = 'pointer';
 
     // Map status colors
-    let fill = '#0f172a';
-    let stroke = 'var(--border-dim)';
-    let glowFilter = '';
-    let statusClass = 'idle';
+    let statusColor = 'var(--state-idle)';
+    let isExecuting = false;
 
     if (node.status === 'thinking') {
-      stroke = 'var(--state-thinking)';
-      glowFilter = 'url(#glow)';
-      statusClass = 'thinking';
+      statusColor = 'var(--state-thinking)';
     } else if (node.status === 'executing') {
-      stroke = 'var(--state-executing)';
-      glowFilter = 'url(#glow)';
-      statusClass = 'executing';
+      statusColor = 'var(--state-executing)';
+      isExecuting = true;
     } else if (node.status === 'success') {
-      stroke = 'var(--state-success)';
-      statusClass = 'success';
+      statusColor = 'var(--state-success)';
     } else if (node.status === 'failure') {
-      stroke = 'var(--state-failure)';
-      statusClass = 'failure';
+      statusColor = 'var(--state-failure)';
     } else if (node.status === 'planning') {
-      stroke = 'var(--state-planning)';
-      statusClass = 'planning';
+      statusColor = 'var(--state-planning)';
     }
 
-    // Create Main Node Outer Ring
-    const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-    circle.setAttribute('cx', node.x);
-    circle.setAttribute('cy', node.y);
-    circle.setAttribute('r', isFocused ? '14' : '11');
-    circle.setAttribute('fill', fill);
-    circle.setAttribute('stroke', stroke);
-    circle.setAttribute('stroke-dasharray', node.status === 'planning' ? '3,3' : 'none');
-    circle.className.baseVal = 'node-circle';
-    
-    if (glowFilter) {
-      circle.setAttribute('filter', glowFilter);
-    }
-    
-    g.appendChild(circle);
+    // Card Dimensions (Sleek horizontal compact layout)
+    const cardWidth = 154;
+    const cardHeight = 38;
+    const cardX = node.x - cardWidth / 2;
+    const cardY = node.y - cardHeight / 2;
 
-    // Inner core node point
-    const core = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-    core.setAttribute('cx', node.x);
-    core.setAttribute('cy', node.y);
-    core.setAttribute('r', '4');
-    core.setAttribute('fill', stroke);
-    g.appendChild(core);
+    // 1. Main Card Background Rectangle
+    const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+    rect.setAttribute('x', cardX);
+    rect.setAttribute('y', cardY);
+    rect.setAttribute('width', cardWidth);
+    rect.setAttribute('height', cardHeight);
+    rect.setAttribute('rx', '6');
+    rect.setAttribute('ry', '6');
+    rect.setAttribute('fill', 'var(--bg-card)'); // Theme-responsive card background
+    rect.setAttribute('stroke', isFocused ? 'var(--accent-color)' : 'var(--border-dim)'); // Theme-responsive border
+    rect.setAttribute('stroke-width', isFocused ? '1.5' : '1');
+    rect.className.baseVal = 'node-card-rect';
+    g.appendChild(rect);
 
-    // Status beacon dot
-    const beacon = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-    beacon.setAttribute('cx', node.x + 8);
-    beacon.setAttribute('cy', node.y - 8);
-    beacon.setAttribute('r', '3');
-    beacon.setAttribute('fill', stroke);
-    beacon.className.baseVal = 'node-status-dot';
-    g.appendChild(beacon);
+    // 2. Status Indicator Strip (Left Edge of Card)
+    const statusStrip = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+    statusStrip.setAttribute('x', cardX);
+    statusStrip.setAttribute('y', cardY);
+    statusStrip.setAttribute('width', '3');
+    statusStrip.setAttribute('height', cardHeight);
+    statusStrip.setAttribute('rx', '1');
+    statusStrip.setAttribute('fill', statusColor);
+    g.appendChild(statusStrip);
 
-    // Primary Label (Task Title)
+    // 3. Task Title (Primary Label) - Left Aligned
     const label = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-    label.setAttribute('x', node.x);
-    label.setAttribute('y', node.y + 24);
-    label.className.baseVal = 'node-label';
-    label.textContent = node.label;
+    label.setAttribute('x', cardX + 10);
+    label.setAttribute('y', cardY + 16);
+    label.className.baseVal = 'node-card-title';
+    let cleanLabel = node.label;
+    if (cleanLabel.length > 25) cleanLabel = cleanLabel.substring(0, 23) + '...';
+    label.textContent = cleanLabel;
     g.appendChild(label);
 
-    // Sublabel (Agent assigned / Status info)
+    // 4. Assigned Agent (Sublabel) - Left Aligned
     const sublabel = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-    sublabel.setAttribute('x', node.x);
-    sublabel.setAttribute('y', node.y + 33);
-    sublabel.className.baseVal = 'node-sublabel';
+    sublabel.setAttribute('x', cardX + 10);
+    sublabel.setAttribute('y', cardY + 28);
+    sublabel.className.baseVal = 'node-card-agent';
     sublabel.textContent = node.sublabel;
     g.appendChild(sublabel);
+
+    // 5. Small Status Indicator Dot on Right Edge
+    const dot = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+    dot.setAttribute('cx', cardX + cardWidth - 12);
+    dot.setAttribute('cy', node.y);
+    dot.setAttribute('r', '3.5');
+    dot.setAttribute('fill', statusColor);
+    if (isExecuting || node.status === 'thinking') {
+      dot.className.baseVal = 'node-status-dot-pulse';
+    }
+    g.appendChild(dot);
 
     // Node Interaction: Click node to focus on that subtask
     g.addEventListener('click', (e) => {

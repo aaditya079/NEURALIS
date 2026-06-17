@@ -199,7 +199,7 @@ class TerminalShell {
         this.appendLogLine('output', '  touch <file>     Create an empty text file.');
         this.appendLogLine('output', '  rm <path>        Deletes a file or directory.');
         this.appendLogLine('output', '  agent            Status report of coordinated neural agents.');
-        this.appendLogLine('output', '  theme <name>     Swap interface skin (obsidian, cyberpunk, matrix, emerald).');
+        this.appendLogLine('output', '  theme <name>     Swap interface skin (slate, oceanic, amber, light).');
         this.appendLogLine('output', '  verify           Initiate system test runs.');
         this.appendLogLine('output', '  clear            Wipe terminal output logs.');
         break;
@@ -365,11 +365,11 @@ class TerminalShell {
 
       case 'theme': {
         if (args.length === 0) {
-          this.appendLogLine('output', 'Available themes: obsidian, cyberpunk, matrix, emerald. Usage: theme <name>');
+          this.appendLogLine('output', 'Available themes: slate, oceanic, amber, light. Usage: theme <name>');
           break;
         }
         const name = args[0].toLowerCase();
-        if (['obsidian', 'cyberpunk', 'matrix', 'emerald'].includes(name)) {
+        if (['slate', 'oceanic', 'amber', 'light'].includes(name)) {
           this.switchTheme(name);
         } else {
           this.appendLogLine('error', `theme: unknown theme: ${args[0]}`);

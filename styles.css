@@ -7,93 +7,144 @@
    -------------------------------------------------------------------------- */
 :root {
   /* Fonts */
-  --font-ui: 'Outfit', sans-serif;
-  --font-mono: 'Fira Code', monospace;
+  --font-ui: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-mono: 'Geist Mono', 'Fira Code', monospace;
 
-  /* Theme: Obsidian Dark (Default) */
-  --bg-core: #050811;
-  --bg-panel: rgba(10, 16, 30, 0.7);
-  --bg-card: rgba(18, 28, 54, 0.4);
-  --bg-card-hover: rgba(26, 40, 77, 0.6);
-  --border-glow: rgba(0, 212, 255, 0.15);
-  --border-dim: rgba(255, 255, 255, 0.06);
-  --border-focus: rgba(0, 212, 255, 0.4);
+  /* Theme: Premium Slate-Dark (Default) */
+  --bg-core: #030303;                  /* True Deep OLED Black */
+  --bg-panel: rgba(9, 10, 15, 0.85);    /* Dark Slate panel */
+  --bg-card: rgba(17, 18, 24, 0.55);   /* Clean card body */
+  --bg-card-hover: rgba(26, 27, 36, 0.85);
+  --border-glow: rgba(99, 102, 241, 0.05); /* Extremely subtle brand tint */
+  --border-dim: rgba(255, 255, 255, 0.045); /* Hairline crisp grey border */
+  --border-focus: rgba(99, 102, 241, 0.6);
   
-  --accent-color: #00d4ff;
-  --accent-glow: rgba(0, 212, 255, 0.4);
-  --arrow-color: #00d4ff;
+  --accent-color: #6366F1;             /* Designer Indigo Accent */
+  --accent-glow: rgba(99, 102, 241, 0.2);
+  --arrow-color: #4F46E5;
 
-  --color-text-main: #f1f5f9;
-  --color-text-muted: #94a3b8;
-  --color-text-dim: #475569;
+  --color-text-main: #F9FAFB;          /* Crisp Off-White */
+  --color-text-muted: #8A8F98;         /* Neutral Muted Grey */
+  --color-text-dim: #4B5563;           /* Dark slate label grey */
 
   /* State Colors */
-  --state-idle: #64748b;
-  --state-thinking: #f59e0b;
-  --state-planning: #a855f7;
-  --state-executing: #3b82f6;
-  --state-success: #10b981;
-  --state-failure: #ef4444;
+  --state-idle: #6B7280;
+  --state-thinking: #D97706;
+  --state-planning: #7C3AED;
+  --state-executing: #2563EB;
+  --state-success: #059669;
+  --state-failure: #DC2626;
 
-  --state-idle-glow: rgba(100, 116, 139, 0.2);
-  --state-thinking-glow: rgba(245, 158, 11, 0.3);
-  --state-planning-glow: rgba(168, 85, 247, 0.3);
-  --state-executing-glow: rgba(59, 130, 246, 0.3);
-  --state-success-glow: rgba(16, 185, 129, 0.3);
-  --state-failure-glow: rgba(239, 68, 68, 0.3);
+  --state-idle-glow: rgba(107, 114, 128, 0.1);
+  --state-thinking-glow: rgba(217, 119, 6, 0.15);
+  --state-planning-glow: rgba(124, 58, 237, 0.15);
+  --state-executing-glow: rgba(37, 99, 235, 0.15);
+  --state-success-glow: rgba(5, 150, 105, 0.15);
+  --state-failure-glow: rgba(220, 38, 38, 0.15);
   
   /* Scrollbar Settings */
-  --scrollbar-track: rgba(5, 8, 17, 0.3);
-  --scrollbar-thumb: rgba(255, 255, 255, 0.1);
-  --scrollbar-thumb-hover: rgba(255, 255, 255, 0.2);
+  --scrollbar-track: rgba(0, 0, 0, 0.1);
+  --scrollbar-thumb: rgba(255, 255, 255, 0.06);
+  --scrollbar-thumb-hover: rgba(255, 255, 255, 0.12);
+
+  /* Element Styling Variables */
+  --bg-terminal: #050508;
+  --panel-shadow: 0 4px 24px 0 rgba(0, 0, 0, 0.6);
+  --panel-shadow-hover: 0 6px 30px 0 rgba(0, 0, 0, 0.7);
 }
 
-/* Theme: Cyberpunk Neon */
-body.theme-cyberpunk {
-  --bg-core: #0c0214;
-  --bg-panel: rgba(22, 6, 38, 0.7);
-  --bg-card: rgba(46, 12, 75, 0.4);
-  --bg-card-hover: rgba(69, 18, 112, 0.6);
-  --border-glow: rgba(255, 0, 127, 0.2);
-  --border-dim: rgba(255, 0, 127, 0.1);
-  --border-focus: #ff007f;
-  --accent-color: #ff007f;
-  --accent-glow: rgba(255, 0, 127, 0.5);
-  --arrow-color: #ff007f;
-  --state-executing: #00f0ff;
-  --state-executing-glow: rgba(0, 240, 255, 0.3);
+/* Explicit Slate theme selector (matches default root variables) */
+body.theme-slate {
+  --bg-core: #030303;
+  --bg-panel: rgba(9, 10, 15, 0.85);
+  --bg-card: rgba(17, 18, 24, 0.55);
+  --bg-card-hover: rgba(26, 27, 36, 0.85);
+  --border-glow: rgba(99, 102, 241, 0.05);
+  --border-dim: rgba(255, 255, 255, 0.045);
+  --border-focus: rgba(99, 102, 241, 0.6);
+  --accent-color: #6366F1;
+  --accent-glow: rgba(99, 102, 241, 0.2);
+  --arrow-color: #4F46E5;
+  --color-text-main: #F9FAFB;
+  --color-text-muted: #8A8F98;
+  --color-text-dim: #4B5563;
+  --bg-terminal: #050508;
+  --panel-shadow: 0 4px 24px 0 rgba(0, 0, 0, 0.6);
+  --panel-shadow-hover: 0 6px 30px 0 rgba(0, 0, 0, 0.7);
 }
 
-/* Theme: Matrix Green */
-body.theme-matrix {
-  --bg-core: #020803;
-  --bg-panel: rgba(4, 20, 8, 0.75);
-  --bg-card: rgba(8, 38, 15, 0.4);
-  --bg-card-hover: rgba(12, 59, 23, 0.6);
-  --border-glow: rgba(0, 255, 70, 0.2);
-  --border-dim: rgba(0, 255, 70, 0.08);
-  --border-focus: #00ff46;
-  --accent-color: #00ff46;
-  --accent-glow: rgba(0, 255, 70, 0.5);
-  --arrow-color: #00ff46;
-  --color-text-main: #39ff14;
-  --color-text-muted: #1dbc3c;
-  --state-thinking: #00ff46;
+/* Theme: Oceanic Navy */
+body.theme-oceanic {
+  --bg-core: #050811;                  /* Midnight ocean black */
+  --bg-panel: rgba(11, 19, 36, 0.85);   /* Dark slate-blue panel */
+  --bg-card: rgba(18, 30, 56, 0.55);    /* Muted navy card */
+  --bg-card-hover: rgba(28, 45, 82, 0.85);
+  --border-glow: rgba(14, 165, 233, 0.05);
+  --border-dim: rgba(255, 255, 255, 0.045);
+  --border-focus: rgba(14, 165, 233, 0.6);
+  
+  --accent-color: #0ea5e9;             /* Sky Blue Accent */
+  --accent-glow: rgba(14, 165, 233, 0.2);
+  --arrow-color: #0284c7;
+
+  --color-text-main: #F3F4F6;
+  --color-text-muted: #9CA3AF;
+  --color-text-dim: #4B5563;
+
+  --bg-terminal: #070a14;
+  --panel-shadow: 0 4px 24px 0 rgba(0, 0, 0, 0.75);
+  --panel-shadow-hover: 0 6px 30px 0 rgba(0, 0, 0, 0.85);
 }
 
-/* Theme: Emerald Grid */
-body.theme-emerald {
-  --bg-core: #030a08;
-  --bg-panel: rgba(6, 22, 18, 0.75);
-  --bg-card: rgba(12, 43, 35, 0.4);
-  --bg-card-hover: rgba(18, 66, 54, 0.6);
-  --border-glow: rgba(16, 185, 129, 0.2);
-  --border-dim: rgba(16, 185, 129, 0.08);
-  --border-focus: #10b981;
-  --accent-color: #10b981;
-  --accent-glow: rgba(16, 185, 129, 0.5);
-  --arrow-color: #10b981;
-  --state-executing: #34d399;
+/* Theme: Amber Gold */
+body.theme-amber {
+  --bg-core: #0c0a09;                  /* Warm stone black */
+  --bg-panel: rgba(28, 25, 23, 0.85);   /* Dark clay panel */
+  --bg-card: rgba(41, 37, 36, 0.55);    /* Warm brown-stone card */
+  --bg-card-hover: rgba(68, 64, 60, 0.85);
+  --border-glow: rgba(245, 158, 11, 0.05);
+  --border-dim: rgba(255, 255, 255, 0.045);
+  --border-focus: rgba(245, 158, 11, 0.6);
+  
+  --accent-color: #f59e0b;             /* Amber Gold Accent */
+  --accent-glow: rgba(245, 158, 11, 0.2);
+  --arrow-color: #d97706;
+
+  --color-text-main: #FAFAF9;
+  --color-text-muted: #A8A29E;
+  --color-text-dim: #57534E;
+
+  --bg-terminal: #0f0d0c;
+  --panel-shadow: 0 4px 24px 0 rgba(0, 0, 0, 0.7);
+  --panel-shadow-hover: 0 6px 30px 0 rgba(0, 0, 0, 0.8);
+}
+
+/* Theme: Light Opal */
+body.theme-light {
+  --bg-core: #fafafa;                  /* Premium clean off-white */
+  --bg-panel: rgba(255, 255, 255, 0.95); /* Pure white panels */
+  --bg-card: rgba(244, 244, 245, 0.85); /* Cool grey cards */
+  --bg-card-hover: rgba(228, 228, 231, 0.95);
+  --border-glow: rgba(79, 70, 229, 0.03);
+  --border-dim: rgba(0, 0, 0, 0.065);   /* Hairline dark grey borders */
+  --border-focus: rgba(79, 70, 229, 0.5);
+  
+  --accent-color: #4f46e5;             /* Indigo accent */
+  --accent-glow: rgba(79, 70, 229, 0.1);
+  --arrow-color: #6366f1;
+
+  --color-text-main: #09090b;          /* Dark Charcoal Text */
+  --color-text-muted: #71717a;         /* Muted Slate Grey */
+  --color-text-dim: #a1a1aa;           /* Dim placeholder/disabled grey */
+
+  --bg-terminal: #f4f4f5;
+  
+  --scrollbar-track: rgba(0, 0, 0, 0.03);
+  --scrollbar-thumb: rgba(0, 0, 0, 0.08);
+  --scrollbar-thumb-hover: rgba(0, 0, 0, 0.16);
+
+  --panel-shadow: 0 4px 24px 0 rgba(0, 0, 0, 0.03);
+  --panel-shadow-hover: 0 6px 30px 0 rgba(0, 0, 0, 0.05);
 }
 
 /* --------------------------------------------------------------------------
@@ -110,8 +161,8 @@ body {
   color: var(--color-text-main);
   background: var(--bg-core);
   background-image: 
-    radial-gradient(at 10% 20%, rgba(0, 212, 255, 0.03) 0px, transparent 50%),
-    radial-gradient(at 90% 80%, rgba(168, 85, 247, 0.02) 0px, transparent 50%);
+    radial-gradient(at 5% 5%, rgba(99, 102, 241, 0.035) 0px, transparent 40%),
+    radial-gradient(at 95% 95%, rgba(124, 58, 237, 0.015) 0px, transparent 40%);
   height: 100vh;
   width: 100vw;
   overflow: hidden;
@@ -124,38 +175,36 @@ body {
 .flex-col { display: flex; flex-direction: column; }
 .scrollable { overflow-y: auto; overflow-x: hidden; }
 .hidden { display: none !important; }
-.text-accent { color: var(--accent-color) !important; text-shadow: 0 0 8px var(--accent-glow); }
-.pulsing { animation: blink 1.5s infinite ease-in-out; }
+.text-accent { color: var(--accent-color) !important; }
+.pulsing { animation: blink 2s infinite ease-in-out; }
 
 /* Scrollbar styling */
 .scrollable::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 4px;
+  height: 4px;
 }
 .scrollable::-webkit-scrollbar-track {
   background: var(--scrollbar-track);
 }
 .scrollable::-webkit-scrollbar-thumb {
   background: var(--scrollbar-thumb);
-  border-radius: 3px;
+  border-radius: 2px;
 }
 .scrollable::-webkit-scrollbar-thumb:hover {
   background: var(--scrollbar-thumb-hover);
 }
 
-/* Glass panel base */
+/* Premium Card Panel base */
 .glass-panel {
   background: var(--bg-panel);
-  backdrop-filter: blur(16px) saturate(180%);
-  -webkit-backdrop-filter: blur(16px) saturate(180%);
   border: 1px solid var(--border-dim);
-  border-radius: 12px;
-  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
-  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+  border-radius: 8px;
+  box-shadow: var(--panel-shadow);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 .glass-panel:hover {
-  border-color: rgba(255, 255, 255, 0.1);
-  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5), 0 0 10px var(--border-glow);
+  border-color: var(--accent-glow);
+  box-shadow: var(--panel-shadow-hover);
 }
 
 /* --------------------------------------------------------------------------
@@ -264,15 +313,14 @@ body {
   font-size: 0.55rem;
   padding: 2px 6px;
   border-radius: 4px;
-  background: rgba(255, 255, 255, 0.02);
+  background: var(--bg-card);
   border: 1px solid var(--border-dim);
   transition: all 0.2s ease;
 }
 .btn-settings-trigger:hover {
   color: var(--accent-color);
-  border-color: var(--accent-color);
-  box-shadow: 0 0 8px var(--accent-glow);
-  background: rgba(0, 212, 255, 0.03);
+  border-color: var(--border-focus);
+  background: var(--bg-card-hover);
 }
 
 /* Simulation Playback controls */
@@ -292,7 +340,7 @@ body {
   color: var(--color-text-muted);
 }
 .glass-select {
-  background: rgba(5, 8, 17, 0.6);
+  background: var(--bg-card);
   border: 1px solid var(--border-dim);
   border-radius: 6px;
   color: var(--color-text-main);
@@ -303,6 +351,10 @@ body {
   cursor: pointer;
   width: 250px;
 }
+.glass-select option {
+  background: var(--bg-core);
+  color: var(--color-text-main);
+}
 .glass-select:focus {
   border-color: var(--border-focus);
 }
@@ -311,7 +363,7 @@ body {
   display: flex;
   align-items: center;
   gap: 8px;
-  background: rgba(5, 8, 17, 0.4);
+  background: var(--bg-card);
   padding: 4px 8px;
   border-radius: 8px;
   border: 1px solid var(--border-dim);
@@ -330,24 +382,23 @@ body {
 }
 .btn-icon:hover {
   color: var(--color-text-main);
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--bg-card-hover);
 }
 .btn-primary-action {
   background: var(--accent-color);
   border: none;
-  color: var(--bg-core);
+  color: #FFFFFF;
   padding: 6px 14px;
   border-radius: 6px;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-weight: bold;
-  box-shadow: 0 0 10px var(--accent-glow);
+  font-weight: 600;
   transition: all 0.2s ease;
 }
 .btn-primary-action:hover {
-  box-shadow: 0 0 15px var(--accent-glow);
+  opacity: 0.9;
   transform: translateY(-1px);
 }
 
@@ -381,7 +432,7 @@ body {
   border-radius: 50%;
   background: var(--accent-color);
   cursor: pointer;
-  box-shadow: 0 0 8px var(--accent-glow);
+  border: 1px solid rgba(255, 255, 255, 0.2);
 }
 .glass-slider.scrubber {
   width: 100%;
@@ -424,13 +475,12 @@ body {
   height: 6px;
   border-radius: 50%;
   background: var(--accent-color);
-  box-shadow: 0 0 8px var(--accent-glow);
 }
-.status-badge.thinking .status-dot { background: var(--state-thinking); box-shadow: 0 0 8px var(--state-thinking-glow); }
-.status-badge.executing .status-dot { background: var(--state-executing); box-shadow: 0 0 8px var(--state-executing-glow); }
-.status-badge.success .status-dot { background: var(--state-success); box-shadow: 0 0 8px var(--state-success-glow); }
-.status-badge.failure .status-dot { background: var(--state-failure); box-shadow: 0 0 8px var(--state-failure-glow); }
-.status-badge.paused .status-dot { background: var(--state-idle); box-shadow: 0 0 8px var(--state-idle-glow); }
+.status-badge.thinking .status-dot { background: var(--state-thinking); }
+.status-badge.executing .status-dot { background: var(--state-executing); }
+.status-badge.success .status-dot { background: var(--state-success); }
+.status-badge.failure .status-dot { background: var(--state-failure); }
+.status-badge.paused .status-dot { background: var(--state-idle); }
 
 /* --------------------------------------------------------------------------
    5. Sidebars & Panel Headers
@@ -458,7 +508,6 @@ body {
 }
 .title-icon {
   color: var(--accent-color);
-  filter: drop-shadow(0 0 4px var(--accent-glow));
 }
 .badge {
   background: var(--bg-card);
@@ -499,7 +548,6 @@ body {
 .agent-card:hover, .agent-card.focused {
   border-color: var(--border-focus);
   background: var(--bg-card-hover);
-  box-shadow: 0 0 10px rgba(0, 212, 255, 0.05);
 }
 .agent-card.focused {
   border-left: 3px solid var(--accent-color);
@@ -660,34 +708,35 @@ body {
   box-shadow: 0 0 12px var(--accent-glow);
 }
 
-/* SVG Node Visuals */
-.node-circle {
-  transition: all 0.3s ease;
-  cursor: pointer;
-  stroke-width: 1.5;
+/* SVG Card Node Visuals */
+.node-card-rect {
+  transition: stroke 0.2s ease, fill 0.2s ease;
 }
-.node-group:hover .node-circle {
-  r: 16;
-  filter: url(#glow);
+.node-group:hover .node-card-rect {
+  stroke: rgba(255, 255, 255, 0.15) !important;
+  fill: #0F1016 !important;
 }
-.node-label {
+.node-card-title {
   font-family: var(--font-ui);
-  font-size: 10px;
-  font-weight: 500;
+  font-size: 8.5px;
+  font-weight: 600;
   fill: var(--color-text-main);
   pointer-events: none;
-  text-anchor: middle;
 }
-.node-sublabel {
+.node-card-agent {
   font-family: var(--font-mono);
   font-size: 7px;
   fill: var(--color-text-muted);
   pointer-events: none;
-  text-anchor: middle;
 }
-.node-status-dot {
-  stroke: #050811;
-  stroke-width: 1;
+.node-status-dot-pulse {
+  animation: beaconPulse 1.6s infinite ease-in-out;
+  transform-origin: center;
+}
+
+@keyframes beaconPulse {
+  0%, 100% { opacity: 0.5; r: 3; }
+  50% { opacity: 1; r: 4.5; }
 }
 
 /* SVG Connection Lines */
@@ -738,13 +787,13 @@ body {
   background: rgba(255, 255, 255, 0.02);
 }
 .theme-tab.active {
-  border-color: var(--border-glow);
-  color: var(--accent-color);
-  background: rgba(0, 212, 255, 0.05);
+  border-color: var(--border-focus);
+  color: var(--color-text-main);
+  background: rgba(99, 102, 241, 0.08);
 }
 .terminal-body {
   flex: 1;
-  background: rgba(0, 0, 0, 0.45);
+  background: #050508;
   font-family: var(--font-mono);
   font-size: 0.75rem;
   padding: 12px;
@@ -755,14 +804,7 @@ body {
   position: relative;
 }
 .terminal-body::after {
-  content: " ";
-  display: block;
-  position: absolute;
-  top: 0; left: 0; bottom: 0; right: 0;
-  background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
-  z-index: 2;
-  background-size: 100% 3px, 3px 100%;
-  pointer-events: none;
+  display: none;
 }
 .terminal-log-stream {
   flex: 1;
@@ -941,7 +983,7 @@ body {
 }
 .vector-node:hover {
   border-color: var(--accent-color);
-  background: rgba(0, 212, 255, 0.02);
+  background: var(--bg-card-hover);
 }
 .vector-text {
   color: var(--color-text-main);
@@ -1182,10 +1224,9 @@ body {
 .timeline-block:hover, .timeline-block.active {
   border-color: var(--border-focus);
   background: var(--bg-card-hover);
-  box-shadow: 0 0 10px rgba(0, 212, 255, 0.05);
 }
 .timeline-block.active {
-  box-shadow: 0 0 12px var(--accent-glow);
+  background: var(--bg-card-hover);
 }
 .timeline-block::after {
   content: "";
@@ -1203,7 +1244,6 @@ body {
 }
 .timeline-block.active::after {
   background: var(--accent-color);
-  box-shadow: 0 0 4px var(--accent-glow);
 }
 
 .timeline-time {
@@ -1269,9 +1309,10 @@ body {
 }
 .modal-content {
   width: 460px;
-  background: rgba(10, 16, 30, 0.95);
-  border: 1px solid var(--border-glow);
-  box-shadow: 0 0 35px rgba(0, 212, 255, 0.2);
+  background: var(--bg-panel);
+  border: 1px solid var(--border-dim);
+  border-radius: 8px;
+  box-shadow: var(--panel-shadow-hover);
   padding: 20px;
   animation: slideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
@@ -1312,7 +1353,7 @@ body {
   margin-bottom: 4px;
 }
 .glass-input {
-  background: rgba(0, 0, 0, 0.4);
+  background: var(--bg-card);
   border: 1px solid var(--border-dim);
   border-radius: 6px;
   padding: 8px 12px;
@@ -1322,8 +1363,7 @@ body {
   outline: none;
 }
 .glass-input:focus {
-  border-color: var(--accent-color);
-  box-shadow: 0 0 8px var(--accent-glow);
+  border-color: var(--border-focus);
 }
 .full-width {
   width: 100% !important;
@@ -1399,13 +1439,11 @@ body {
 /* API Error Badge & Message styling */
 .status-badge.api-error .status-dot {
   background: var(--state-failure);
-  box-shadow: 0 0 10px var(--state-failure-glow);
 }
 .status-badge.api-error {
   border-color: var(--state-failure);
   color: var(--state-failure);
   background: rgba(239, 68, 68, 0.1);
-  box-shadow: 0 0 8px rgba(239, 68, 68, 0.2);
 }
 
 .api-error-card {
@@ -1459,7 +1497,7 @@ body {
   font-weight: bold;
 }
 .btn-error-action.primary:hover {
-  box-shadow: 0 0 10px rgba(239, 68, 68, 0.4);
+  opacity: 0.9;
 }
 
 /* Responsive Scaling adjustments */
@@ -1508,9 +1546,8 @@ body {
   
   .mobile-tab-btn.active {
     color: var(--accent-color);
-    background: rgba(0, 212, 255, 0.05);
+    background: var(--border-glow);
     border-bottom: 2px solid var(--accent-color);
-    box-shadow: 0 4px 12px rgba(0, 212, 255, 0.03);
   }
   
   .dashboard-container {
