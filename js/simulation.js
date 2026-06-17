@@ -558,58 +558,6 @@ jobs:
   { type: 'SIMULATION_COMPLETE' }
 ];
 
-// SCENARIO 5: CodeRabbit PR Review & Auto-Correction
-const coderabbitEvents = [
-  { type: 'TIMELINE_LOG', timestamp: '00:00.0', agentName: 'SYSTEM', description: 'Opening pull request review workspace.' },
-  { type: 'TERMINAL_OUTPUT', text: 'Initializing git checkout & CodeRabbit review hook...', lineType: 'system' },
-  { type: 'SPAWN_AGENT', agentId: 'architect', name: 'Lead Architect', role: 'System Designer & Planner' },
-  { type: 'UPDATE_AGENT_STATUS', agentId: 'architect', status: 'thinking', cost: 0.002, tokens: 110, runtime: 0.6 },
-  { type: 'STREAM_THOUGHT', agentId: 'architect', text: '# Goal Analysis: CodeRabbit Code Review Integration\n\nWe are integrating CodeRabbit to review our pull request changes on the backend calculation engine:\n\n1. **Implement Feature**: Write the math helper module `src/utils/math.js` with basic dividing and power functions.\n2. **Commit & Push**: Trigger Git pushes to origin to open a PR.\n3. **CodeRabbit Scan**: CodeRabbit reviews the changes, flags bugs, and recommends fixes.\n4. **Apply Fixes**: Resolve comments and verify tests.\n\nLet\'s spawn our Developer Agent to implement the math helper.' },
-  { type: 'SPAWN_NODE', nodeId: 'root', label: 'CodeRabbit Code Review', sublabel: 'Root Goal', status: 'thinking', x: 250, y: 40 },
-  
-  { type: 'SPAWN_NODE', nodeId: 'task-write', label: '1. Write Math Module', sublabel: 'DevAgent', status: 'executing', x: 80, y: 120, parentId: 'root' },
-  { type: 'SPAWN_NODE', nodeId: 'task-review', label: '2. CodeRabbit AI Review', sublabel: 'CodeRabbit', status: 'planning', x: 250, y: 120, parentId: 'root' },
-  { type: 'SPAWN_NODE', nodeId: 'task-fix', label: '3. Apply & Resolve Fixes', sublabel: 'DevAgent', status: 'planning', x: 420, y: 120, parentId: 'root' },
-
-  { type: 'SPAWN_AGENT', agentId: 'developer', name: 'DevAgent-1', role: 'Principal JavaScript Engineer' },
-  { type: 'UPDATE_AGENT_STATUS', agentId: 'developer', status: 'thinking', cost: 0.003, tokens: 230, runtime: 1.8 },
-  { type: 'STREAM_THOUGHT', agentId: 'developer', text: 'Implementing `src/utils/math.js` with simple helper functions for dividing and percentages.\n\nI will create the file and add some initial logic.' },
-  
-  { type: 'VFS_WRITE', path: '/src/utils/math.js', content: `// Math Utility Module\nfunction divide(a, b) {\n  // Direct division - potential division by zero risk!\n  return a / b;\n}\n\nfunction percentage(value, total) {\n  return (value / total) * 100;\n}\n\nmodule.exports = { divide, percentage };`, operation: 'NEW' },
-  { type: 'TERMINAL_COMMAND', command: 'git add src/utils/math.js; git commit -m "feat: add math helper utils"; git push origin feat/math' },
-  { type: 'TERMINAL_OUTPUT', text: 'git add: added 1 file.\n[feat/math 8c9f048] feat: add math helper utils\nPushing to https://github.com/aaditya079/NEURALIS.git\nPull Request created: https://github.com/aaditya079/NEURALIS/pull/12', lineType: 'success' },
-  { type: 'UPDATE_NODE_STATUS', nodeId: 'task-write', status: 'success' },
-
-  // --- CODERABBIT SCANNING ---
-  { type: 'SPAWN_AGENT', agentId: 'coderabbit', name: 'CodeRabbit', role: 'AI Code Reviewer' },
-  { type: 'UPDATE_AGENT_STATUS', agentId: 'coderabbit', status: 'thinking', cost: 0.005, tokens: 480, runtime: 4.2 },
-  { type: 'UPDATE_NODE_STATUS', nodeId: 'task-review', status: 'executing' },
-  { type: 'TIMELINE_LOG', timestamp: '00:04.5', agentName: 'CodeRabbit', description: 'Reviewing pull request changes on feat/math branch.' },
-  
-  { type: 'STREAM_THOUGHT', agentId: 'coderabbit', text: '# CodeRabbit Review Comments\n\nI have reviewed the changes in pull request #12 and found two potential issues:\n\n1. **Divide-by-Zero Risk**: In `src/utils/math.js:3`, the function `divide(a, b)` does not validate `b`. If `b === 0`, it returns `Infinity` or `NaN`, which will cause crash vulnerabilities in downstream database computations.\n2. **Type Validation**: The inputs `a` and `b` are not checked to ensure they are numbers.\n\n## Recommendation\n```javascript\nfunction divide(a, b) {\n  if (typeof a !== "number" || typeof b !== "number") {\n    throw new TypeError("Inputs must be numbers");\n  }\n  if (b === 0) {\n    throw new Error("Division by zero");\n  }\n  return a / b;\n}\n```' },
-  { type: 'TERMINAL_OUTPUT', text: 'CODERABBIT REVIEW: 1 Critical Warning flagged at src/utils/math.js:3 (Divide-by-zero risk).', lineType: 'error' },
-  { type: 'UPDATE_NODE_STATUS', nodeId: 'task-review', status: 'success' },
-
-  // --- RESOLVING FIXES ---
-  { type: 'UPDATE_NODE_STATUS', nodeId: 'task-fix', status: 'executing' },
-  { type: 'UPDATE_AGENT_STATUS', agentId: 'developer', status: 'thinking', cost: 0.004, tokens: 310, runtime: 7.5 },
-  { type: 'TIMELINE_LOG', timestamp: '00:07.8', agentName: 'DevAgent-1', description: 'Resolving CodeRabbit comments in math module.' },
-  { type: 'STREAM_THOUGHT', agentId: 'developer', text: 'Applying CodeRabbit\'s recommendations to `src/utils/math.js`:\n1. Add typeof guards for inputs.\n2. Throw an error on division by zero.\n\nLet\'s update the file contents.' },
-
-  { type: 'VFS_WRITE', path: '/src/utils/math.js', before: `// Math Utility Module\nfunction divide(a, b) {\n  // Direct division - potential division by zero risk!\n  return a / b;\n}\n\n&nbsp;\nfunction percentage(value, total) {\n  return (value / total) * 100;\n}\n\n&nbsp;\nmodule.exports = { divide, percentage };`, content: `// Math Utility Module\nfunction divide(a, b) {\n  if (typeof a !== 'number' || typeof b !== 'number') {\n    throw new TypeError('Inputs must be numbers');\n  }\n  if (b === 0) {\n    throw new Error('Division by zero is not allowed');\n  }\n  return a / b;\n}\n\nfunction percentage(value, total) {\n  if (typeof value !== 'number' || typeof total !== 'number') {\n    throw new TypeError('Inputs must be numbers');\n  }\n  if (total === 0) {\n    return 0; // Return zero safe fallback\n  }\n  return (value / total) * 100;\n}\n\nmodule.exports = { divide, percentage };`, operation: 'MODIFIED' },
-
-  { type: 'TERMINAL_COMMAND', command: 'npm run test' },
-  { type: 'TERMINAL_OUTPUT', text: 'PASS  tests/math.test.js\n  ✓ Math.divide (15ms)\n  ✓ Math.divide handles zero divisor error (8ms)\n  ✓ Math.percentage computes correctly (4ms)\n  ✓ Math.percentage handles zero total gracefully (6ms)\n\nTest Suites: 1 passed, 1 total', lineType: 'success' },
-  
-  { type: 'TERMINAL_COMMAND', command: 'git commit -am "fix: address CodeRabbit review recommendations"; git push origin feat/math' },
-  { type: 'TERMINAL_OUTPUT', text: 'git commit: updated 1 file.\nPushing updates to origin/feat/math...\nCodeRabbit check: PASS. PR approved for merge!', lineType: 'success' },
-  
-  { type: 'UPDATE_NODE_STATUS', nodeId: 'task-fix', status: 'success' },
-  { type: 'UPDATE_NODE_STATUS', nodeId: 'root', status: 'success' },
-  { type: 'TIMELINE_LOG', timestamp: '00:11.2', agentName: 'SYSTEM', description: 'Review successfully resolved and code merged.' },
-  { type: 'SIMULATION_COMPLETE' }
-];
-
 // Map scenarios
 export function getScenarioEvents(scenarioId) {
   switch (scenarioId) {
@@ -621,8 +569,6 @@ export function getScenarioEvents(scenarioId) {
       return kanbanEvents;
     case 'cicd-devops':
       return cicdDevopsEvents;
-    case 'coderabbit-review':
-      return coderabbitEvents;
     default:
       return jwtAuthEvents;
   }

@@ -14,7 +14,3 @@ yarn-error.log*
 # OS metadata
 .DS_Store
 Thumbs.db
-
-# Agent skills
-.agent/
-
