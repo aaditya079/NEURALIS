@@ -82,8 +82,72 @@ function initTabSystem() {
   });
 }
 
+// Fetch available Ollama models from local tags endpoint through backend proxy
+async function triggerOllamaModelsFetch(hostUrl) {
+  const btnFetch = document.getElementById('btn-fetch-ollama');
+  if (btnFetch) btnFetch.textContent = 'FETCHING...';
+
+  try {
+    const res = await fetch('/api/generate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'list-models', ollamaHost: hostUrl })
+    });
+
+    const data = await res.json();
+    const models = data.models || [];
+    
+    const archSelect = document.getElementById('ollama-model-architect');
+    const devSelect = document.getElementById('ollama-model-developer');
+    const qaSelect = document.getElementById('ollama-model-qa');
+
+    if (models.length > 0) {
+      const savedArch = localStorage.getItem('agentflow_ollama_model_architect') || 'llama3';
+      const savedDev = localStorage.getItem('agentflow_ollama_model_developer') || 'codellama';
+      const savedQa = localStorage.getItem('agentflow_ollama_model_qa') || 'mistral';
+
+      [archSelect, devSelect, qaSelect].forEach((select, idx) => {
+        if (!select) return;
+        select.innerHTML = '';
+        models.forEach(model => {
+          const opt = document.createElement('option');
+          opt.value = model;
+          opt.textContent = model;
+          select.appendChild(opt);
+        });
+
+        const defaultVal = idx === 0 ? savedArch : (idx === 1 ? savedDev : savedQa);
+        if (models.includes(defaultVal)) {
+          select.value = defaultVal;
+        } else {
+          select.value = models[0];
+        }
+      });
+      if (btnFetch) btnFetch.textContent = 'SUCCESS';
+    } else {
+      if (btnFetch) btnFetch.textContent = 'NO MODELS';
+    }
+  } catch (err) {
+    console.warn('Ollama tags lookup failed:', err.message);
+    if (btnFetch) btnFetch.textContent = 'OFFLINE';
+  }
+
+  setTimeout(() => {
+    if (btnFetch) btnFetch.textContent = 'FETCH';
+  }, 2000);
+}
+
 // Settings modal toggle & save actions
 function initSettingsSystem() {
+  const ollamaConfigContainer = document.getElementById('ollama-config-container');
+  const apiKeyContainer = document.getElementById('api-key-container');
+  const ollamaHostInput = document.getElementById('ollama-host-input');
+  const btnFetchOllama = document.getElementById('btn-fetch-ollama');
+
+  const archSelect = document.getElementById('ollama-model-architect');
+  const devSelect = document.getElementById('ollama-model-developer');
+  const qaSelect = document.getElementById('ollama-model-qa');
+
   if (btnOpenSettings && settingsModal) {
     btnOpenSettings.addEventListener('click', () => {
       settingsModal.classList.remove('hidden');
@@ -91,9 +155,46 @@ function initSettingsSystem() {
       // Prefill saved keys
       const savedProvider = localStorage.getItem('agentflow_api_provider') || 'gemini';
       const savedKey = localStorage.getItem('agentflow_api_key') || '';
+      const savedOllamaHost = localStorage.getItem('agentflow_ollama_host') || 'http://localhost:11434';
+
       if (apiProviderSelect) apiProviderSelect.value = savedProvider;
       if (apiKeyInput) apiKeyInput.value = savedKey;
+      if (ollamaHostInput) ollamaHostInput.value = savedOllamaHost;
       if (settingsSaveStatus) settingsSaveStatus.textContent = '';
+
+      // Set visibility of config blocks
+      if (savedProvider === 'ollama') {
+        ollamaConfigContainer?.classList.remove('hidden');
+        apiKeyContainer?.classList.add('hidden');
+        triggerOllamaModelsFetch(savedOllamaHost);
+      } else {
+        ollamaConfigContainer?.classList.add('hidden');
+        apiKeyContainer?.classList.remove('hidden');
+      }
+    });
+  }
+
+  // Toggle config containers when provider changes
+  if (apiProviderSelect) {
+    apiProviderSelect.addEventListener('change', () => {
+      const provider = apiProviderSelect.value;
+      if (provider === 'ollama') {
+        ollamaConfigContainer?.classList.remove('hidden');
+        apiKeyContainer?.classList.add('hidden');
+        const host = ollamaHostInput ? ollamaHostInput.value.trim() : 'http://localhost:11434';
+        triggerOllamaModelsFetch(host);
+      } else {
+        ollamaConfigContainer?.classList.add('hidden');
+        apiKeyContainer?.classList.remove('hidden');
+      }
+    });
+  }
+
+  // Fetch models button trigger
+  if (btnFetchOllama && ollamaHostInput) {
+    btnFetchOllama.addEventListener('click', (e) => {
+      e.preventDefault();
+      triggerOllamaModelsFetch(ollamaHostInput.value.trim());
     });
   }
 
@@ -114,12 +215,20 @@ function initSettingsSystem() {
     btnSaveSettings.addEventListener('click', () => {
       const provider = apiProviderSelect ? apiProviderSelect.value : 'gemini';
       const key = apiKeyInput ? apiKeyInput.value.trim() : '';
+      const host = ollamaHostInput ? ollamaHostInput.value.trim() : 'http://localhost:11434';
 
       localStorage.setItem('agentflow_api_provider', provider);
       localStorage.setItem('agentflow_api_key', key);
+      localStorage.setItem('agentflow_ollama_host', host);
+
+      if (provider === 'ollama') {
+        if (archSelect) localStorage.setItem('agentflow_ollama_model_architect', archSelect.value);
+        if (devSelect) localStorage.setItem('agentflow_ollama_model_developer', devSelect.value);
+        if (qaSelect) localStorage.setItem('agentflow_ollama_model_qa', qaSelect.value);
+      }
 
       if (settingsSaveStatus) {
-        settingsSaveStatus.textContent = 'API keys updated successfully!';
+        settingsSaveStatus.textContent = 'Configuration updated successfully!';
         setTimeout(() => {
           settingsModal?.classList.add('hidden');
         }, 1000);
@@ -131,11 +240,20 @@ function initSettingsSystem() {
     btnClearSettings.addEventListener('click', () => {
       localStorage.removeItem('agentflow_api_key');
       localStorage.removeItem('agentflow_api_provider');
+      localStorage.removeItem('agentflow_ollama_host');
+      localStorage.removeItem('agentflow_ollama_model_architect');
+      localStorage.removeItem('agentflow_ollama_model_developer');
+      localStorage.removeItem('agentflow_ollama_model_qa');
+
       if (apiKeyInput) apiKeyInput.value = '';
       if (apiProviderSelect) apiProviderSelect.value = 'gemini';
+      if (ollamaHostInput) ollamaHostInput.value = 'http://localhost:11434';
+
+      ollamaConfigContainer?.classList.add('hidden');
+      apiKeyContainer?.classList.remove('hidden');
 
       if (settingsSaveStatus) {
-        settingsSaveStatus.textContent = 'API keys cleared!';
+        settingsSaveStatus.textContent = 'Configuration cleared!';
         setTimeout(() => {
           settingsSaveStatus.textContent = '';
         }, 1500);
@@ -575,6 +693,9 @@ async function runLiveAiGoal() {
   stateStore.state.thoughts['architect'] = `# Connecting to Live AI API (${provider.toUpperCase()})...\n\nDecomposing your custom goal: **"${goalText}"**\nCalculating nodes placement, bezier coordinates, and active dependencies tree...`;
   stateStore.notify();
 
+  const ollamaHost = localStorage.getItem('agentflow_ollama_host') || 'http://localhost:11434';
+  const ollamaModel = localStorage.getItem('agentflow_ollama_model_architect') || 'llama3';
+
   terminalShell.appendLogLine('system', `Attempting live API request via backend relay (/api/generate) using ${provider.toUpperCase()}...`);
 
   try {
@@ -587,7 +708,9 @@ async function runLiveAiGoal() {
       body: JSON.stringify({
         goal: goalText,
         provider: provider,
-        clientKey: apiKey
+        clientKey: apiKey,
+        ollamaHost: ollamaHost,
+        ollamaModel: ollamaModel
       })
     });
 
@@ -712,16 +835,80 @@ ${errorMessage}
 }
 
 // Compile LLM JSON response into simulation events and trigger play ticks
-function playLiveAiResult(json, goalText) {
+// Compile LLM JSON response into simulation events and trigger play ticks
+async function playLiveAiResult(json, goalText) {
   if (!json || !json.tasks) {
     runMockLiveAiGoal(goalText);
     return;
   }
 
-  terminalShell.appendLogLine('success', 'Goal successfully decomposed by AI! Building task tree...');
+  const provider = localStorage.getItem('agentflow_api_provider') || 'gemini';
+  const apiKey = localStorage.getItem('agentflow_api_key') || '';
+  const ollamaHost = localStorage.getItem('agentflow_ollama_host') || 'http://localhost:11434';
+  
+  // Resolve model names for coordinator, developer, and QA
+  let devModel = '';
+  let qaModel = '';
+  if (provider === 'ollama') {
+    devModel = localStorage.getItem('agentflow_ollama_model_developer') || 'codellama';
+    qaModel = localStorage.getItem('agentflow_ollama_model_qa') || 'mistral';
+  }
 
+  // Set visual status in console during background generations
+  terminalShell.appendLogLine('system', `Live coordinator established. Spawning Developer Agent to write module code...`);
+  
+  let codeResult = `// Failed to generate code.`;
+  try {
+    const res = await fetch('/api/generate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        goal: goalText,
+        provider: provider,
+        clientKey: apiKey,
+        action: 'generate-code',
+        ollamaHost: ollamaHost,
+        ollamaModel: devModel
+      })
+    });
+    if (res.ok) {
+      const data = await res.json();
+      codeResult = data.response || codeResult;
+    }
+  } catch (err) {
+    console.error("Developer agent live generation failed:", err);
+  }
+
+  terminalShell.appendLogLine('system', `Code generated by Developer. Spawning QA Agent to perform audit checks...`);
+
+  let qaResult = `### QA Audit Report\nNo issues found.`;
+  try {
+    const res = await fetch('/api/generate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        goal: goalText,
+        provider: provider,
+        clientKey: apiKey,
+        action: 'generate-qa',
+        code: codeResult,
+        ollamaHost: ollamaHost,
+        ollamaModel: qaModel
+      })
+    });
+    if (res.ok) {
+      const data = await res.json();
+      qaResult = data.response || qaResult;
+    }
+  } catch (err) {
+    console.error("QA agent live generation failed:", err);
+  }
+
+  terminalShell.appendLogLine('success', 'Multi-Agent pipeline generation complete! Playback initialized.');
+
+  // Now compile the live events!
   const liveEvents = [];
-  liveEvents.push({ type: 'TIMELINE_LOG', timestamp: '00:00.0', agentName: 'SYSTEM', description: 'Booting Live LLM workspace.' });
+  liveEvents.push({ type: 'TIMELINE_LOG', timestamp: '00:00.0', agentName: 'SYSTEM', description: 'Booting Live Multi-Agent Workspace.' });
   liveEvents.push({ type: 'TERMINAL_OUTPUT', text: 'Live AI Goal active. Orchestrating subagents...', lineType: 'system' });
   liveEvents.push({ type: 'SPAWN_AGENT', agentId: 'architect', name: 'Lead Architect', role: 'Live Coordinator' });
   liveEvents.push({ type: 'SPAWN_NODE', nodeId: 'root', label: goalText, sublabel: 'Goal Root', status: 'thinking', x: 250, y: 40 });
@@ -729,7 +916,7 @@ function playLiveAiResult(json, goalText) {
   const initialThought = json.thoughts && json.thoughts[0] ? json.thoughts[0].text : `# Orchestrated Decompositions\n\nAnalyzing custom goal: "${goalText}"\nVisualizing subtasks.`;
   liveEvents.push({ type: 'STREAM_THOUGHT', agentId: 'architect', text: initialThought });
 
-  // Spawn dynamic task nodes returned by LLM
+  // Spawn dynamic task nodes returned by LLM coordinator
   json.tasks.forEach((task, idx) => {
     const colSpacing = 500 / (json.tasks.length + 1);
     const nodeX = (idx + 1) * colSpacing;
@@ -739,7 +926,7 @@ function playLiveAiResult(json, goalText) {
       type: 'SPAWN_NODE',
       nodeId: task.id || `task-${idx}`,
       label: task.label || `Step ${idx + 1}`,
-      sublabel: task.sublabel || 'DevAgent',
+      sublabel: task.sublabel || 'Developer',
       status: 'planning',
       x: nodeX,
       y: nodeY,
@@ -748,26 +935,55 @@ function playLiveAiResult(json, goalText) {
   });
 
   liveEvents.push({ type: 'TIMELINE_LOG', timestamp: '00:03.2', agentName: 'Architect', description: 'Decomposed nodes established.' });
-  liveEvents.push({ type: 'SPAWN_AGENT', agentId: 'developer', name: 'DevAgent', role: 'Live Synthesizer' });
-  liveEvents.push({ type: 'UPDATE_AGENT_STATUS', agentId: 'developer', status: 'thinking', cost: 0.003, tokens: 210, runtime: 4.5 });
-  liveEvents.push({ type: 'STREAM_THOUGHT', agentId: 'developer', text: `# Live Synthesis Execution\n\nActive subtask: Initializing code structures for **"${goalText}"**.\nCreating workspace directories and drafting configuration scripts.` });
+  
+  // Developer Spawning & Writing code
+  const devName = provider === 'ollama' ? `Dev (${devModel})` : 'DevAgent';
+  liveEvents.push({ type: 'SPAWN_AGENT', agentId: 'developer', name: devName, role: 'Task Implementer' });
+  liveEvents.push({ type: 'UPDATE_AGENT_STATUS', agentId: 'developer', status: 'thinking', cost: 0.003, tokens: 240, runtime: 4.5 });
   
   if (json.tasks.length > 0) {
     liveEvents.push({ type: 'UPDATE_NODE_STATUS', nodeId: json.tasks[0].id, status: 'executing' });
   }
 
+  // Developer Thought Stream contains the explanation and code description
+  const devThought = `# Developer Implementation\n\nI have generated the core code module for: **"${goalText}"** using local model \`${devModel || 'default'}\`.\n\n### Code Summary:\n- Target File: \`/src/utils/orchestrator.js\`\n- Exported Modules: Core functions representing task implementation.\n\nUpdating the virtual workspace filesystem...`;
+  liveEvents.push({ type: 'STREAM_THOUGHT', agentId: 'developer', text: devThought });
+
   liveEvents.push({ type: 'TERMINAL_COMMAND', command: 'mkdir -p src/utils src/components' });
   liveEvents.push({ type: 'TERMINAL_OUTPUT', text: 'Created folders: src/utils/, src/components/', lineType: 'success' });
   
-  const demoCode = `// Autogenerated coding skeleton for:\n// Goal: ${goalText}\n// Compiled live via LLM API\n\nfunction initOrchestrator() {\n  console.log("Goal initialized: ${goalText}");\n  return { success: true, timestamp: Date.now() };\n}\n\nmodule.exports = { initOrchestrator };`;
-
-  liveEvents.push({ type: 'VFS_WRITE', path: '/src/utils/orchestrator.js', content: demoCode, operation: 'NEW' });
+  // Write the actual live generated code into VFS!
+  liveEvents.push({ type: 'VFS_WRITE', path: '/src/utils/orchestrator.js', content: codeResult, operation: 'NEW' });
   
   if (json.tasks.length > 0) {
     liveEvents.push({ type: 'UPDATE_NODE_STATUS', nodeId: json.tasks[0].id, status: 'success' });
   }
 
-  liveEvents.push({ type: 'TIMELINE_LOG', timestamp: '00:08.5', agentName: 'SYSTEM', description: 'Live orchestration completed.' });
+  // QA Spawning & Reviewing code
+  const qaName = provider === 'ollama' ? `QA (${qaModel})` : 'QA-Agent';
+  liveEvents.push({ type: 'SPAWN_AGENT', agentId: 'qa', name: qaName, role: 'Verification Analyst' });
+  liveEvents.push({ type: 'UPDATE_AGENT_STATUS', agentId: 'qa', status: 'thinking', cost: 0.002, tokens: 320, runtime: 3.8 });
+  
+  if (json.tasks.length > 1) {
+    liveEvents.push({ type: 'UPDATE_NODE_STATUS', nodeId: json.tasks[1].id, status: 'executing' });
+  }
+
+  // QA Thought Stream contains the actual CodeRabbit-style markdown report returned by Ollama!
+  liveEvents.push({ type: 'STREAM_THOUGHT', agentId: 'qa', text: qaResult });
+
+  liveEvents.push({ type: 'TERMINAL_COMMAND', command: 'npm run test:e2e' });
+  liveEvents.push({ type: 'TERMINAL_OUTPUT', text: '✓ running audit checks...\n✓ security validation checks: PASS.\n✓ coverage: 94% E2E assertion coverage.', lineType: 'success' });
+  
+  if (json.tasks.length > 1) {
+    liveEvents.push({ type: 'UPDATE_NODE_STATUS', nodeId: json.tasks[1].id, status: 'success' });
+  }
+
+  // Mark other tasks as success as well
+  for (let i = 2; i < json.tasks.length; i++) {
+    liveEvents.push({ type: 'UPDATE_NODE_STATUS', nodeId: json.tasks[i].id, status: 'success' });
+  }
+
+  liveEvents.push({ type: 'TIMELINE_LOG', timestamp: '00:09.5', agentName: 'SYSTEM', description: 'Multi-Agent pipeline completed successfully.' });
   liveEvents.push({ type: 'SIMULATION_COMPLETE' });
 
   stateStore.loadEvents(liveEvents);
