@@ -332,7 +332,6 @@ function initSettingsSystem() {
     });
   }
 }
-}
 
 // Format simulated elapsed time clock
 function formatTime(seconds) {
