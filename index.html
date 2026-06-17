@@ -340,57 +340,86 @@
           Input your API Key below to enable the **10x Live Mode**. Custom goals will call the actual LLM API in real-time, generate dynamic task trees, and stream real markdown thoughts. Keys are stored safely client-side in `localStorage`.
         </p>
         
-        <div class="form-group flex-col">
-          <label for="api-provider">API PROVIDER</label>
-          <select id="api-provider" class="glass-select full-width">
-            <option value="gemini">Google Gemini API (Default)</option>
-            <option value="openai">OpenAI API (GPT-4o/3.5)</option>
-            <option value="claude">Anthropic Claude API (3.5 Sonnet)</option>
-            <option value="ollama">Ollama (Local Multi-LLM)</option>
-          </select>
+        <div class="section-title">API KEYS & CREDENTIALS</div>
+        <div class="grid-row-2">
+          <div class="form-group flex-col">
+            <label for="key-gemini">GEMINI API KEY</label>
+            <input type="password" id="key-gemini" class="glass-input" placeholder="AIzaSy...">
+          </div>
+          <div class="form-group flex-col">
+            <label for="key-openai">OPENAI API KEY</label>
+            <input type="password" id="key-openai" class="glass-input" placeholder="sk-...">
+          </div>
         </div>
-
-        <!-- API Key input (visible for cloud models) -->
-        <div id="api-key-container" class="form-group flex-col margin-top">
-          <label for="api-key-input">API DEVELOPER KEY</label>
-          <input type="password" id="api-key-input" class="glass-input" placeholder="Paste your API key here (sk-... or AIzaSy...)">
-        </div>
-
-        <!-- Ollama configuration options (Visible when Ollama is selected) -->
-        <div id="ollama-config-container" class="hidden">
-          <div class="form-group flex-col margin-top">
+        <div class="grid-row-2 margin-top">
+          <div class="form-group flex-col">
+            <label for="key-claude">CLAUDE API KEY</label>
+            <input type="password" id="key-claude" class="glass-input" placeholder="sk-ant-...">
+          </div>
+          <div class="form-group flex-col">
             <label for="ollama-host-input">OLLAMA HOST URL</label>
             <div style="display: flex; gap: 8px;">
               <input type="text" id="ollama-host-input" class="glass-input" style="flex: 1;" value="http://localhost:11434" placeholder="e.g. http://localhost:11434">
               <button id="btn-fetch-ollama" class="btn-error-action" style="padding: 0 10px; font-size: 0.65rem; border-color: var(--accent-color); color: var(--color-text-main);">FETCH</button>
             </div>
           </div>
-          
-          <div class="form-group flex-col margin-top">
-            <label for="ollama-model-architect">COORDINATOR MODEL (ARCHITECT)</label>
-            <select id="ollama-model-architect" class="glass-select full-width">
-              <option value="llama3">llama3 (Default)</option>
-              <option value="llama3.2">llama3.2</option>
-              <option value="qwen2.5-coder">qwen2.5-coder</option>
-              <option value="mistral">mistral</option>
+        </div>
+
+        <div class="section-title margin-top">ROLE ROUTING CONFIGURATION</div>
+        
+        <!-- Architect Config Row -->
+        <div class="role-config-row">
+          <div class="form-group flex-col">
+            <label for="role-architect-provider">COORDINATOR PROVIDER</label>
+            <select id="role-architect-provider" class="glass-select full-width role-provider-select">
+              <option value="gemini">Google Gemini</option>
+              <option value="openai">OpenAI</option>
+              <option value="claude">Anthropic Claude</option>
+              <option value="ollama">Ollama (Local)</option>
             </select>
           </div>
-
-          <div class="form-group flex-col margin-top">
-            <label for="ollama-model-developer">DEVELOPER MODEL (CODER)</label>
-            <select id="ollama-model-developer" class="glass-select full-width">
-              <option value="codellama">codellama (Default)</option>
-              <option value="qwen2.5-coder">qwen2.5-coder</option>
-              <option value="llama3">llama3</option>
+          <div class="form-group flex-col">
+            <label for="role-architect-model">COORDINATOR MODEL</label>
+            <select id="role-architect-model" class="glass-select full-width role-model-select">
+              <!-- Dynamically populated -->
             </select>
           </div>
+        </div>
 
-          <div class="form-group flex-col margin-top">
-            <label for="ollama-model-qa">QA / SECURITY MODEL (AUDITOR)</label>
-            <select id="ollama-model-qa" class="glass-select full-width">
-              <option value="mistral">mistral (Default)</option>
-              <option value="phi3">phi3</option>
-              <option value="llama3">llama3</option>
+        <!-- Developer Config Row -->
+        <div class="role-config-row margin-top">
+          <div class="form-group flex-col">
+            <label for="role-developer-provider">DEVELOPER PROVIDER</label>
+            <select id="role-developer-provider" class="glass-select full-width role-provider-select">
+              <option value="gemini">Google Gemini</option>
+              <option value="openai">OpenAI</option>
+              <option value="claude">Anthropic Claude</option>
+              <option value="ollama">Ollama (Local)</option>
+            </select>
+          </div>
+          <div class="form-group flex-col">
+            <label for="role-developer-model">DEVELOPER MODEL</label>
+            <select id="role-developer-model" class="glass-select full-width role-model-select">
+              <!-- Dynamically populated -->
+            </select>
+          </div>
+        </div>
+
+        <!-- QA Config Row -->
+        <div class="role-config-row margin-top">
+          <div class="form-group flex-col">
+            <label for="role-qa-provider">QA / SECURITY PROVIDER</label>
+            <select id="role-qa-provider" class="glass-select full-width role-provider-select">
+              <option value="gemini">Google Gemini</option>
+              <option value="openai">OpenAI</option>
+              <option value="claude">Anthropic Claude</option>
+              <option value="ollama">Ollama (Local)</option>
+            </select>
+          </div>
+          <div class="form-group flex-col">
+            <label for="role-qa-model">QA / SECURITY MODEL</label>
+            <select id="role-qa-model" class="glass-select full-width role-model-select">
+              <!-- Dynamically populated -->
             </select>
           </div>
         </div>

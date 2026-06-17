@@ -1308,13 +1308,34 @@ body {
   animation: fadeIn 0.2s ease;
 }
 .modal-content {
-  width: 460px;
+  width: 520px;
   background: var(--bg-panel);
   border: 1px solid var(--border-dim);
   border-radius: 8px;
   box-shadow: var(--panel-shadow-hover);
   padding: 20px;
   animation: slideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.grid-row-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+.role-config-row {
+  display: grid;
+  grid-template-columns: 1fr 1.5fr;
+  gap: 12px;
+  align-items: center;
+}
+.section-title {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  color: var(--color-text-muted);
+  border-bottom: 1px solid var(--border-dim);
+  padding-bottom: 4px;
+  margin-bottom: 8px;
 }
 .modal-header {
   display: flex;

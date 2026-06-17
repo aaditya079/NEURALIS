@@ -17,7 +17,8 @@ module.exports = async (req, res) => {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const { goal, provider, clientKey, action, ollamaHost, ollamaModel, code } = req.body;
+  const { goal, provider, clientKey, action, ollamaHost, ollamaModel, model, code } = req.body;
+  const targetModel = model || ollamaModel;
 
   // Handle Ollama model listing action
   if (action === 'list-models') {
@@ -66,7 +67,7 @@ module.exports = async (req, res) => {
     // ----------------------------------------------------------------------
     if (targetProvider === 'ollama') {
       const host = ollamaHost || 'http://localhost:11434';
-      const model = ollamaModel || 'llama3';
+      const modelName = targetModel || 'llama3';
       
       let prompt = '';
       if (action === 'generate-code') {
@@ -81,7 +82,7 @@ module.exports = async (req, res) => {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          model: model,
+          model: modelName,
           prompt: prompt,
           stream: false,
           options: { temperature: 0.2 }
@@ -108,7 +109,8 @@ module.exports = async (req, res) => {
     // GOOGLE GEMINI PROVIDER
     // ----------------------------------------------------------------------
     if (targetProvider === 'gemini') {
-      const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
+      const modelName = targetModel || 'gemini-2.5-flash';
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`;
       
       let prompt = '';
       let isJson = true;
@@ -154,6 +156,7 @@ module.exports = async (req, res) => {
     // OPENAI PROVIDER
     // ----------------------------------------------------------------------
     if (targetProvider === 'openai') {
+      const modelName = targetModel || 'gpt-4o-mini';
       let systemContent = '';
       let userContent = goal;
       let responseFormat = undefined;
@@ -175,7 +178,7 @@ module.exports = async (req, res) => {
           'Authorization': `Bearer ${apiKey}`
         },
         body: JSON.stringify({
-          model: 'gpt-4o-mini',
+          model: modelName,
           messages: [
             { "role": "system", "content": systemContent },
             { "role": "user", "content": userContent }
@@ -202,6 +205,7 @@ module.exports = async (req, res) => {
     // ANTHROPIC CLAUDE PROVIDER
     // ----------------------------------------------------------------------
     if (targetProvider === 'claude') {
+      const modelName = targetModel || 'claude-3-5-sonnet-20241022';
       let systemContent = '';
       let userContent = `Decompose the programming goal: "${goal}"`;
 
@@ -223,7 +227,7 @@ module.exports = async (req, res) => {
           'content-type': 'application/json'
         },
         body: JSON.stringify({
-          model: 'claude-3-5-sonnet-20241022',
+          model: modelName,
           max_tokens: 1200,
           system: systemContent,
           messages: [
